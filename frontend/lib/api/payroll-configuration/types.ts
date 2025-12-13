@@ -167,3 +167,133 @@ export interface Allowance extends BaseConfiguration {
   effectiveDate?: string;
   expirationDate?: string;
 }
+
+
+
+// ============================================
+// Signing Bonus Types
+// ============================================
+
+export interface SigningBonus {
+  _id: string;
+  name: string;
+  amount: number;
+  paymentTerms: string;
+  eligibilityCriteria?: string;
+  description?: string;
+  status: 'draft' | 'approved' | 'rejected';
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSigningBonusDto {
+  name: string;
+  amount: number;
+  paymentTerms: string;
+  eligibilityCriteria?: string;
+  description?: string;
+  status: 'draft';
+}
+
+export interface UpdateSigningBonusDto {
+  name?: string;
+  amount?: number;
+  paymentTerms?: string;
+  eligibilityCriteria?: string;
+  description?: string;
+}
+
+
+
+// ============================================
+// Termination Benefit Types
+// ============================================
+
+export interface TerminationBenefit {
+  _id: string;
+  name: string;
+  benefitType: 'severance' | 'resignation' | 'retirement' | 'other';
+  calculationMethod: string;
+  eligibilityCriteria?: string;
+  amount?: number;
+  description?: string;
+  status: 'draft' | 'approved' | 'rejected';
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTerminationBenefitDto {
+  name: string;
+  benefitType: 'severance' | 'resignation' | 'retirement' | 'other';
+  calculationMethod: string;
+  eligibilityCriteria?: string;
+  amount?: number;
+  description?: string;
+  status: 'draft';
+}
+
+export interface UpdateTerminationBenefitDto {
+  name?: string;
+  benefitType?: 'severance' | 'resignation' | 'retirement' | 'other';
+  calculationMethod?: string;
+  eligibilityCriteria?: string;
+  amount?: number;
+  description?: string;
+}
+
+
+
+
+
+
+
+// ============================================
+// Tax Rule Types
+// ============================================
+
+export interface TaxRule {
+  _id: string;
+  name: string;
+  taxType: 'income' | 'social_security' | 'health' | 'other';
+  rate: number;
+  brackets?: Array<{
+    min: number;
+    max?: number;
+    rate: number;
+  }>;
+  description?: string;
+  status: 'draft' | 'approved' | 'rejected';
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTaxRuleDto {
+  name: string;
+  taxType: 'income' | 'social_security' | 'health' | 'other';
+  rate: number;
+  brackets?: Array<{
+    min: number;
+    max?: number;
+    rate: number;
+  }>;
+  description?: string;
+  status: 'draft';
+}
+
+export interface UpdateTaxRuleDto {
+  name?: string;
+  taxType?: 'income' | 'social_security' | 'health' | 'other';
+  rate?: number;
+  brackets?: Array<{
+    min: number;
+    max?: number;
+    rate: number;
+  }>;
+  description?: string;
+  status?: 'draft';
+}
+
+
