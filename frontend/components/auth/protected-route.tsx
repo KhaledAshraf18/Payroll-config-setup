@@ -19,7 +19,7 @@ export function ProtectedRoute({
   requiredUserType,
   redirectTo = "/dashboard",
 }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const { user, loading: isLoading } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
 

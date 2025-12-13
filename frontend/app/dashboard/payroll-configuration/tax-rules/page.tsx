@@ -6,33 +6,34 @@ import { useRequireAuth } from '@/lib/hooks/use-auth';
 import { SystemRole } from '@/types';
 import ConfigurationTable from '@/components/payroll-configuration/ConfigurationTable';
 import StatusBadge from '@/components/payroll-configuration/StatusBadge';
-import { allowancesApi } from '@/lib/api/payroll-configuration/allowances';
+import { taxRulesApi } from '@/lib/api/payroll-configuration/tax-rules';
+import { TaxRule } from '@/lib/api/payroll-configuration/types';
 
-export default function AllowancesPage() {
-  // Only Payroll Specialist can create/edit allowances
-  useRequireAuth(SystemRole.PAYROLL_SPECIALIST, '/dashboard');
+export default function TaxRulesPage() {
+  // Only Legal Admin can create/edit tax rules
+  useRequireAuth(SystemRole.LEGAL_POLICY_ADMIN, '/dashboard');
   
   const router = useRouter();
-  const [allowances, setAllowances] = useState<any[]>([]);
-  const [allAllowances, setAllAllowances] = useState<any[]>([]);
+  const [taxRules, setTaxRules] = useState<TaxRule[]>([]);
+  const [allTaxRules, setAllTaxRules] = useState<TaxRule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    loadAllowances();
+    loadTaxRules();
   }, [statusFilter]);
 
-  const loadAllowances = async () => {
+  const loadTaxRules = async () => {
     setIsLoading(true);
     try {
       const status = statusFilter !== 'all' ? statusFilter as 'draft' | 'approved' | 'rejected' : undefined;
-      const data = await allowancesApi.getAll(status);
-      setAllAllowances(data);
-      setAllowances(data);
+      const data = await taxRulesApi.getAll(status);
+      setAllTaxRules(data);
+      setTaxRules(data);
     } catch (error) {
-      console.error('Error loading allowances:', error);
-      setAllowances([]);
-      setAllAllowances([]);
+      console.error('Error loading tax rules:', error);
+      setTaxRules([]);
+      setAllTaxRules([]);
     } finally {
       setIsLoading(false);
     }
@@ -41,8 +42,8 @@ export default function AllowancesPage() {
   const columns = [
     { 
       key: 'name', 
-      label: 'Allowance Name',
-      render: (item: any) => (
+      label: 'Tax Rule Name',
+      render: (item: TaxRule) => (
         <div>
           <div className="font-medium text-gray-900">{item.name}</div>
           <div className="text-sm text-gray-500">{item.description}</div>
@@ -50,68 +51,58 @@ export default function AllowancesPage() {
       )
     },
     { 
-      key: 'type', 
-      label: 'Type',
-      render: (item: any) => (
+      key: 'taxType', 
+      label: 'Tax Type',
+      render: (item: TaxRule) => (
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.allowanceType === 'housing' ? 'bg-blue-100 text-blue-800' :
-          item.allowanceType === 'transportation' ? 'bg-green-100 text-green-800' :
-          item.allowanceType === 'meal' ? 'bg-yellow-100 text-yellow-800' :
+          item.taxType === 'income' ? 'bg-blue-100 text-blue-800' :
+          item.taxType === 'social_security' ? 'bg-green-100 text-green-800' :
+          item.taxType === 'health' ? 'bg-purple-100 text-purple-800' :
           'bg-gray-100 text-gray-800'
         }`}>
-          {item.allowanceType}
+          {item.taxType.replace('_', ' ')}
         </span>
       )
     },
     { 
-      key: 'amount', 
-      label: 'Amount',
-      render: (item: any) => (
+      key: 'rate', 
+      label: 'Rate',
+      render: (item: TaxRule) => (
         <div>
           <div className="font-medium text-gray-900">
-            {new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: item.currency
-            }).format(item.amount)}
+            {item.rate}%
           </div>
-          <div className="text-xs text-gray-500">
-            {item.frequency} • {item.taxable ? 'Taxable' : 'Tax-free'}
-          </div>
+          {item.brackets && item.brackets.length > 0 && (
+            <div className="text-xs text-gray-500">
+              {item.brackets.length} bracket(s)
+            </div>
+          )}
         </div>
       )
     },
     { 
-      key: 'recurring', 
-      label: 'Recurring',
-      render: (item: any) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.isRecurring ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-        }`}>
-          {item.isRecurring ? 'Recurring' : 'One-time'}
-        </span>
-      )
+      key: 'status', 
+      label: 'Status',
+      render: (item: TaxRule) => <StatusBadge status={item.status} />
     },
   ];
 
   const handleCreateNew = () => {
-    router.push('/dashboard/payroll-configuration/allowances/new');
+    router.push('/dashboard/payroll-configuration/tax-rules/new');
   };
 
-  const handleView = (item: any) => {
-    router.push(`/dashboard/payroll-configuration/allowances/${item.id}`);
+  const handleView = (item: TaxRule) => {
+    router.push(`/dashboard/payroll-configuration/tax-rules/${item._id}`);
   };
 
-  const handleEdit = (item: any) => {
-    if (item.status === 'draft') {
-      router.push(`/dashboard/payroll-configuration/allowances/${item.id}/edit`);
-    } else {
-      alert('Only draft allowances can be edited.');
-    }
+  const handleEdit = (item: TaxRule) => {
+    // Tax rules can be edited even if approved (they go back to draft)
+    router.push(`/dashboard/payroll-configuration/tax-rules/${item._id}/edit`);
   };
 
-  const handleDelete = async (item: any) => {
+  const handleDelete = async (item: TaxRule) => {
     if (item.status !== 'draft') {
-      alert('Only draft allowances can be deleted.');
+      alert('Only draft tax rules can be deleted.');
       return;
     }
 
@@ -120,16 +111,16 @@ export default function AllowancesPage() {
     }
 
     try {
-      await allowancesApi.delete(item.id);
-      loadAllowances(); // Refresh
+      await taxRulesApi.delete(item._id);
+      loadTaxRules(); // Refresh
     } catch (error) {
-      console.error('Error deleting allowance:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete allowance');
+      console.error('Error deleting tax rule:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete tax rule');
     }
   };
 
   const getStatusCount = (status: 'draft' | 'approved' | 'rejected') => {
-    return allAllowances.filter(g => {
+    return allTaxRules.filter(g => {
       const normalizedStatus = String(g.status || '').toLowerCase();
       return normalizedStatus === status;
     }).length;
@@ -139,8 +130,8 @@ export default function AllowancesPage() {
     <div className="p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Allowances</h1>
-          <p className="text-gray-600 mt-1">Manage employee allowances (housing, transportation, meal, etc.)</p>
+          <h1 className="text-2xl font-bold text-gray-900">Tax Rules</h1>
+          <p className="text-gray-600 mt-1">Manage tax rules and rates (Legal Admin only)</p>
         </div>
         <button
           onClick={handleCreateNew}
@@ -149,7 +140,7 @@ export default function AllowancesPage() {
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
           </svg>
-          Create New Allowance
+          Create New Tax Rule
         </button>
       </div>
 
@@ -160,7 +151,7 @@ export default function AllowancesPage() {
             <div className="flex items-center">
               <StatusBadge status={status} size="sm" />
               <div className="ml-3">
-                <p className="text-sm text-gray-500">{status.charAt(0).toUpperCase() + status.slice(1)} Allowances</p>
+                <p className="text-sm text-gray-500">{status.charAt(0).toUpperCase() + status.slice(1)} Rules</p>
                 <p className="text-2xl font-bold">{getStatusCount(status)}</p>
               </div>
             </div>
@@ -187,16 +178,17 @@ export default function AllowancesPage() {
           </div>
 
           <ConfigurationTable
-            data={allowances}
+            data={taxRules}
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
             isLoading={isLoading}
-            emptyMessage="No allowances found. Create your first allowance to get started."
+            emptyMessage="No tax rules found. Create your first tax rule to get started."
           />
         </div>
       </div>
     </div>
   );
 }
+

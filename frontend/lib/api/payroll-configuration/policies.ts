@@ -108,8 +108,8 @@ export const policiesApi = {
         policies = response;
       } else if (response?.data && Array.isArray(response.data)) {
         policies = response.data;
-      } else if (response?.items && Array.isArray(response.items)) {
-        policies = response.items;
+      } else if (response && typeof response === 'object' && 'items' in response && Array.isArray((response as any).items)) {
+        policies = (response as any).items;
       }
       
       return policies.map(mapBackendToFrontend);
@@ -132,7 +132,7 @@ export const policiesApi = {
   },
 
   // Create new policy
-  create: async (data: Omit<PayrollPolicy, 'id' | 'createdAt' | 'updatedAt' | 'version'>): Promise<PayrollPolicy> => {
+  create: async (data: Omit<PayrollPolicy, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'status' | 'createdBy'>): Promise<PayrollPolicy> => {
     try {
       const backendData = mapFrontendToBackend(data);
       const response = await api.post('/payroll-configuration/policies', backendData);

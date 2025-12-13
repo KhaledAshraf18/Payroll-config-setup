@@ -163,8 +163,6 @@ export default function InsuranceOversightPage() {
 
   // Transform to table format
   const tableData: ConfigurationItem[] = filteredBrackets.map((item) => ({
-    _id: item._id,
-    status: item.status,
     ...item,
   }));
 

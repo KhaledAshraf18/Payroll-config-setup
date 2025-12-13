@@ -2,47 +2,49 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { payTypesApi } from '@/lib/api/payroll-configuration/payTypes';
+import { terminationBenefitsApi } from '@/lib/api/payroll-configuration/termination-benefits';
+import { TerminationBenefit } from '@/lib/api/payroll-configuration/types';
 
-export default function EditPayTypePage() {
+export default function EditTerminationBenefitPage() {
   const params = useParams();
   const router = useRouter();
-  const payTypeId = params.id as string;
+  const terminationBenefitId = params.id as string;
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    type: 'salary' as 'hourly' | 'salary' | 'commission' | 'contract',
+    benefitType: 'severance' as 'severance' | 'resignation' | 'retirement' | 'other',
     calculationMethod: '',
-    isTaxable: false,
-    isOvertimeEligible: false,
+    eligibilityCriteria: '',
     amount: '',
+    description: '',
   });
 
   useEffect(() => {
-    loadPayType();
-  }, [payTypeId]);
+    loadTerminationBenefit();
+  }, [terminationBenefitId]);
 
-  const loadPayType = async () => {
+  const loadTerminationBenefit = async () => {
     setIsLoadingData(true);
     try {
-      const payType = await payTypesApi.getById(payTypeId);
-      const payTypeWithAmount = payType as any;
+      const terminationBenefit = await terminationBenefitsApi.getById(terminationBenefitId);
+      if (terminationBenefit.status !== 'draft') {
+        setError('Only draft termination benefits can be edited.');
+        return;
+      }
       setFormData({
-        name: payType.name || '',
-        description: payType.description || '',
-        type: payType.type || 'salary',
-        calculationMethod: payType.calculationMethod || '',
-        isTaxable: payType.isTaxable !== false,
-        isOvertimeEligible: payType.isOvertimeEligible || false,
-        amount: payTypeWithAmount._amount ? String(payTypeWithAmount._amount) : '6000',
+        name: terminationBenefit.name || '',
+        benefitType: terminationBenefit.benefitType || 'severance',
+        calculationMethod: terminationBenefit.calculationMethod || '',
+        eligibilityCriteria: terminationBenefit.eligibilityCriteria || '',
+        amount: terminationBenefit.amount ? String(terminationBenefit.amount) : '',
+        description: terminationBenefit.description || '',
       });
     } catch (err) {
-      console.error('Error loading pay type:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load pay type');
+      console.error('Error loading termination benefit:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load termination benefit');
     } finally {
       setIsLoadingData(false);
     }
@@ -56,42 +58,38 @@ export default function EditPayTypePage() {
     try {
       // Validate form data
       if (!formData.name.trim()) {
-        throw new Error('Pay type name is required');
+        throw new Error('Termination benefit name is required');
       }
-      
-      // Validate amount
-      const amount = parseFloat(formData.amount);
-      if (!formData.amount || isNaN(amount) || amount < 6000) {
-        throw new Error('Pay type amount must be at least 6000');
+      if (!formData.calculationMethod.trim()) {
+        throw new Error('Calculation method is required');
       }
       
       // Prepare data for API
-      const payTypeData = {
+      const terminationBenefitData = {
         name: formData.name,
-        type: formData.type as 'hourly' | 'salary' | 'commission' | 'contract',
-        description: formData.description || '',
-        calculationMethod: formData.calculationMethod || '',
-        isTaxable: formData.isTaxable,
-        isOvertimeEligible: formData.isOvertimeEligible,
-        amount: amount,
+        benefitType: formData.benefitType as 'severance' | 'resignation' | 'retirement' | 'other',
+        calculationMethod: formData.calculationMethod,
+        eligibilityCriteria: formData.eligibilityCriteria || undefined,
+        amount: formData.amount ? parseFloat(formData.amount) : undefined,
+        description: formData.description || undefined,
       };
       
-      await payTypesApi.update(payTypeId, payTypeData);
+      await terminationBenefitsApi.update(terminationBenefitId, terminationBenefitData);
       
-      // Redirect to pay types list
-      router.push('/dashboard/payroll-configuration/pay-types');
+      // Redirect to termination benefits list
+      router.push('/dashboard/payroll-configuration/termination-benefits');
     } catch (err) {
-      console.error('Error updating pay type:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update pay type');
+      console.error('Error updating termination benefit:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update termination benefit');
       setIsLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: value
     }));
   };
 
@@ -99,7 +97,7 @@ export default function EditPayTypePage() {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500">Loading pay type...</p>
+          <p className="text-gray-500">Loading termination benefit...</p>
         </div>
       </div>
     );
@@ -109,12 +107,12 @@ export default function EditPayTypePage() {
     <div className="p-6">
       <div className="flex items-center mb-6">
         <button
-          onClick={() => router.push('/dashboard/payroll-configuration/pay-types')}
+          onClick={() => router.push('/dashboard/payroll-configuration/termination-benefits')}
           className="mr-4 p-2 rounded-md hover:bg-gray-100"
         >
           ← Back
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Pay Type</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Termination Benefit</h1>
       </div>
 
       <div className="bg-white shadow rounded-lg max-w-4xl mx-auto">
@@ -127,7 +125,7 @@ export default function EditPayTypePage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Pay Type Name *
+                Benefit Name *
               </label>
               <input
                 type="text"
@@ -141,35 +139,61 @@ export default function EditPayTypePage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Type *
+                Benefit Type *
               </label>
               <select
-                name="type"
-                value={formData.type}
+                name="benefitType"
+                value={formData.benefitType}
                 onChange={handleChange}
+                required
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="salary">Salary</option>
-                <option value="hourly">Hourly</option>
-                <option value="commission">Commission</option>
-                <option value="contract">Contract</option>
+                <option value="severance">Severance</option>
+                <option value="resignation">Resignation</option>
+                <option value="retirement">Retirement</option>
+                <option value="other">Other</option>
               </select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Calculation Method *
+              </label>
+              <textarea
+                name="calculationMethod"
+                value={formData.calculationMethod}
+                onChange={handleChange}
+                required
+                rows={2}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Amount * (Minimum 6000)
+                Fixed Amount (EGP) - Optional
               </label>
               <input
                 type="number"
                 name="amount"
                 value={formData.amount}
                 onChange={handleChange}
-                required
-                min="6000"
+                min="0"
                 step="0.01"
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="6000"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Eligibility Criteria
+              </label>
+              <textarea
+                name="eligibilityCriteria"
+                value={formData.eligibilityCriteria}
+                onChange={handleChange}
+                rows={3}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
@@ -185,53 +209,12 @@ export default function EditPayTypePage() {
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Calculation Method
-              </label>
-              <input
-                type="text"
-                name="calculationMethod"
-                value={formData.calculationMethod}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., fixed, hourly_rate * hours"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isTaxable"
-                  checked={formData.isTaxable}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Is Taxable
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isOvertimeEligible"
-                  checked={formData.isOvertimeEligible}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Overtime Eligible
-                </label>
-              </div>
-            </div>
           </div>
 
           <div className="flex justify-end space-x-3 pt-6 border-t">
             <button
               type="button"
-              onClick={() => router.push('/dashboard/payroll-configuration/pay-types')}
+              onClick={() => router.push('/dashboard/payroll-configuration/termination-benefits')}
               className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
@@ -249,3 +232,4 @@ export default function EditPayTypePage() {
     </div>
   );
 }
+

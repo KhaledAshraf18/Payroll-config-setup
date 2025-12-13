@@ -6,33 +6,34 @@ import { useRequireAuth } from '@/lib/hooks/use-auth';
 import { SystemRole } from '@/types';
 import ConfigurationTable from '@/components/payroll-configuration/ConfigurationTable';
 import StatusBadge from '@/components/payroll-configuration/StatusBadge';
-import { allowancesApi } from '@/lib/api/payroll-configuration/allowances';
+import { insuranceBracketsApi } from '@/lib/api/payroll-configuration/insurance-brackets';
+import { InsuranceBracket } from '@/lib/api/payroll-configuration/types';
 
-export default function AllowancesPage() {
-  // Only Payroll Specialist can create/edit allowances
+export default function InsuranceBracketsPage() {
+  // Only Payroll Specialist can create/edit insurance brackets
   useRequireAuth(SystemRole.PAYROLL_SPECIALIST, '/dashboard');
   
   const router = useRouter();
-  const [allowances, setAllowances] = useState<any[]>([]);
-  const [allAllowances, setAllAllowances] = useState<any[]>([]);
+  const [insuranceBrackets, setInsuranceBrackets] = useState<InsuranceBracket[]>([]);
+  const [allInsuranceBrackets, setAllInsuranceBrackets] = useState<InsuranceBracket[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    loadAllowances();
+    loadInsuranceBrackets();
   }, [statusFilter]);
 
-  const loadAllowances = async () => {
+  const loadInsuranceBrackets = async () => {
     setIsLoading(true);
     try {
-      const status = statusFilter !== 'all' ? statusFilter as 'draft' | 'approved' | 'rejected' : undefined;
-      const data = await allowancesApi.getAll(status);
-      setAllAllowances(data);
-      setAllowances(data);
+      const params = statusFilter !== 'all' ? { status: statusFilter } : undefined;
+      const data = await insuranceBracketsApi.getAll(params);
+      setAllInsuranceBrackets(data);
+      setInsuranceBrackets(data);
     } catch (error) {
-      console.error('Error loading allowances:', error);
-      setAllowances([]);
-      setAllAllowances([]);
+      console.error('Error loading insurance brackets:', error);
+      setInsuranceBrackets([]);
+      setAllInsuranceBrackets([]);
     } finally {
       setIsLoading(false);
     }
@@ -40,96 +41,80 @@ export default function AllowancesPage() {
 
   const columns = [
     { 
-      key: 'name', 
-      label: 'Allowance Name',
-      render: (item: any) => (
-        <div>
-          <div className="font-medium text-gray-900">{item.name}</div>
-          <div className="text-sm text-gray-500">{item.description}</div>
-        </div>
-      )
-    },
-    { 
-      key: 'type', 
-      label: 'Type',
-      render: (item: any) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.allowanceType === 'housing' ? 'bg-blue-100 text-blue-800' :
-          item.allowanceType === 'transportation' ? 'bg-green-100 text-green-800' :
-          item.allowanceType === 'meal' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {item.allowanceType}
-        </span>
-      )
-    },
-    { 
-      key: 'amount', 
-      label: 'Amount',
-      render: (item: any) => (
+      key: 'salaryRange', 
+      label: 'Salary Range',
+      render: (item: InsuranceBracket) => (
         <div>
           <div className="font-medium text-gray-900">
             {new Intl.NumberFormat('en-US', {
               style: 'currency',
-              currency: item.currency
-            }).format(item.amount)}
-          </div>
-          <div className="text-xs text-gray-500">
-            {item.frequency} • {item.taxable ? 'Taxable' : 'Tax-free'}
+              currency: 'EGP'
+            }).format(item.minSalary)} - {new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'EGP'
+            }).format(item.maxSalary)}
           </div>
         </div>
       )
     },
     { 
-      key: 'recurring', 
-      label: 'Recurring',
-      render: (item: any) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.isRecurring ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-        }`}>
-          {item.isRecurring ? 'Recurring' : 'One-time'}
-        </span>
+      key: 'employeeContribution', 
+      label: 'Employee Contribution',
+      render: (item: InsuranceBracket) => (
+        <div className="font-medium text-gray-900">{item.employeeContribution}%</div>
       )
+    },
+    { 
+      key: 'employerContribution', 
+      label: 'Employer Contribution',
+      render: (item: InsuranceBracket) => (
+        <div className="font-medium text-gray-900">{item.employerContribution}%</div>
+      )
+    },
+    { 
+      key: 'status', 
+      label: 'Status',
+      render: (item: InsuranceBracket) => <StatusBadge status={item.status} />
     },
   ];
 
   const handleCreateNew = () => {
-    router.push('/dashboard/payroll-configuration/allowances/new');
+    router.push('/dashboard/payroll-configuration/insurance-brackets/new');
   };
 
-  const handleView = (item: any) => {
-    router.push(`/dashboard/payroll-configuration/allowances/${item.id}`);
+  const handleView = (item: InsuranceBracket) => {
+    router.push(`/dashboard/payroll-configuration/insurance-brackets/${item._id}`);
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: InsuranceBracket) => {
     if (item.status === 'draft') {
-      router.push(`/dashboard/payroll-configuration/allowances/${item.id}/edit`);
+      router.push(`/dashboard/payroll-configuration/insurance-brackets/${item._id}/edit`);
     } else {
-      alert('Only draft allowances can be edited.');
+      alert('Only draft insurance brackets can be edited.');
     }
   };
 
-  const handleDelete = async (item: any) => {
+  const handleDelete = async (item: InsuranceBracket) => {
     if (item.status !== 'draft') {
-      alert('Only draft allowances can be deleted.');
+      alert('Only draft insurance brackets can be deleted.');
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
+    if (!confirm(`Are you sure you want to delete this insurance bracket?`)) {
       return;
     }
 
     try {
-      await allowancesApi.delete(item.id);
-      loadAllowances(); // Refresh
+      await insuranceBracketsApi.delete(item._id);
+      loadInsuranceBrackets(); // Refresh
     } catch (error) {
-      console.error('Error deleting allowance:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete allowance');
+      console.error('Error deleting insurance bracket:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete insurance bracket');
     }
   };
 
   const getStatusCount = (status: 'draft' | 'approved' | 'rejected') => {
-    return allAllowances.filter(g => {
+    return allInsuranceBrackets.filter(g => {
       const normalizedStatus = String(g.status || '').toLowerCase();
       return normalizedStatus === status;
     }).length;
@@ -139,8 +124,8 @@ export default function AllowancesPage() {
     <div className="p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Allowances</h1>
-          <p className="text-gray-600 mt-1">Manage employee allowances (housing, transportation, meal, etc.)</p>
+          <h1 className="text-2xl font-bold text-gray-900">Insurance Brackets</h1>
+          <p className="text-gray-600 mt-1">Manage insurance contribution brackets</p>
         </div>
         <button
           onClick={handleCreateNew}
@@ -149,7 +134,7 @@ export default function AllowancesPage() {
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
           </svg>
-          Create New Allowance
+          Create New Insurance Bracket
         </button>
       </div>
 
@@ -160,7 +145,7 @@ export default function AllowancesPage() {
             <div className="flex items-center">
               <StatusBadge status={status} size="sm" />
               <div className="ml-3">
-                <p className="text-sm text-gray-500">{status.charAt(0).toUpperCase() + status.slice(1)} Allowances</p>
+                <p className="text-sm text-gray-500">{status.charAt(0).toUpperCase() + status.slice(1)} Brackets</p>
                 <p className="text-2xl font-bold">{getStatusCount(status)}</p>
               </div>
             </div>
@@ -187,16 +172,17 @@ export default function AllowancesPage() {
           </div>
 
           <ConfigurationTable
-            data={allowances}
+            data={insuranceBrackets}
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
             isLoading={isLoading}
-            emptyMessage="No allowances found. Create your first allowance to get started."
+            emptyMessage="No insurance brackets found. Create your first insurance bracket to get started."
           />
         </div>
       </div>
     </div>
   );
 }
+

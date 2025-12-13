@@ -6,33 +6,34 @@ import { useRequireAuth } from '@/lib/hooks/use-auth';
 import { SystemRole } from '@/types';
 import ConfigurationTable from '@/components/payroll-configuration/ConfigurationTable';
 import StatusBadge from '@/components/payroll-configuration/StatusBadge';
-import { allowancesApi } from '@/lib/api/payroll-configuration/allowances';
+import { signingBonusesApi } from '@/lib/api/payroll-configuration/signing-bonuses';
+import { SigningBonus } from '@/lib/api/payroll-configuration/types';
 
-export default function AllowancesPage() {
-  // Only Payroll Specialist can create/edit allowances
+export default function SigningBonusesPage() {
+  // Only Payroll Specialist can create/edit signing bonuses
   useRequireAuth(SystemRole.PAYROLL_SPECIALIST, '/dashboard');
   
   const router = useRouter();
-  const [allowances, setAllowances] = useState<any[]>([]);
-  const [allAllowances, setAllAllowances] = useState<any[]>([]);
+  const [signingBonuses, setSigningBonuses] = useState<SigningBonus[]>([]);
+  const [allSigningBonuses, setAllSigningBonuses] = useState<SigningBonus[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    loadAllowances();
+    loadSigningBonuses();
   }, [statusFilter]);
 
-  const loadAllowances = async () => {
+  const loadSigningBonuses = async () => {
     setIsLoading(true);
     try {
       const status = statusFilter !== 'all' ? statusFilter as 'draft' | 'approved' | 'rejected' : undefined;
-      const data = await allowancesApi.getAll(status);
-      setAllAllowances(data);
-      setAllowances(data);
+      const data = await signingBonusesApi.getAll(status);
+      setAllSigningBonuses(data);
+      setSigningBonuses(data);
     } catch (error) {
-      console.error('Error loading allowances:', error);
-      setAllowances([]);
-      setAllAllowances([]);
+      console.error('Error loading signing bonuses:', error);
+      setSigningBonuses([]);
+      setAllSigningBonuses([]);
     } finally {
       setIsLoading(false);
     }
@@ -41,8 +42,8 @@ export default function AllowancesPage() {
   const columns = [
     { 
       key: 'name', 
-      label: 'Allowance Name',
-      render: (item: any) => (
+      label: 'Bonus Name',
+      render: (item: SigningBonus) => (
         <div>
           <div className="font-medium text-gray-900">{item.name}</div>
           <div className="text-sm text-gray-500">{item.description}</div>
@@ -50,68 +51,50 @@ export default function AllowancesPage() {
       )
     },
     { 
-      key: 'type', 
-      label: 'Type',
-      render: (item: any) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.allowanceType === 'housing' ? 'bg-blue-100 text-blue-800' :
-          item.allowanceType === 'transportation' ? 'bg-green-100 text-green-800' :
-          item.allowanceType === 'meal' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {item.allowanceType}
-        </span>
-      )
-    },
-    { 
       key: 'amount', 
       label: 'Amount',
-      render: (item: any) => (
-        <div>
-          <div className="font-medium text-gray-900">
-            {new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: item.currency
-            }).format(item.amount)}
-          </div>
-          <div className="text-xs text-gray-500">
-            {item.frequency} • {item.taxable ? 'Taxable' : 'Tax-free'}
-          </div>
+      render: (item: SigningBonus) => (
+        <div className="font-medium text-gray-900">
+          {new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'EGP'
+          }).format(item.amount)}
         </div>
       )
     },
     { 
-      key: 'recurring', 
-      label: 'Recurring',
-      render: (item: any) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.isRecurring ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-        }`}>
-          {item.isRecurring ? 'Recurring' : 'One-time'}
-        </span>
+      key: 'paymentTerms', 
+      label: 'Payment Terms',
+      render: (item: SigningBonus) => (
+        <span className="text-sm text-gray-700">{item.paymentTerms}</span>
       )
+    },
+    { 
+      key: 'status', 
+      label: 'Status',
+      render: (item: SigningBonus) => <StatusBadge status={item.status} />
     },
   ];
 
   const handleCreateNew = () => {
-    router.push('/dashboard/payroll-configuration/allowances/new');
+    router.push('/dashboard/payroll-configuration/signing-bonuses/new');
   };
 
-  const handleView = (item: any) => {
-    router.push(`/dashboard/payroll-configuration/allowances/${item.id}`);
+  const handleView = (item: SigningBonus) => {
+    router.push(`/dashboard/payroll-configuration/signing-bonuses/${item._id}`);
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: SigningBonus) => {
     if (item.status === 'draft') {
-      router.push(`/dashboard/payroll-configuration/allowances/${item.id}/edit`);
+      router.push(`/dashboard/payroll-configuration/signing-bonuses/${item._id}/edit`);
     } else {
-      alert('Only draft allowances can be edited.');
+      alert('Only draft signing bonuses can be edited.');
     }
   };
 
-  const handleDelete = async (item: any) => {
+  const handleDelete = async (item: SigningBonus) => {
     if (item.status !== 'draft') {
-      alert('Only draft allowances can be deleted.');
+      alert('Only draft signing bonuses can be deleted.');
       return;
     }
 
@@ -120,16 +103,16 @@ export default function AllowancesPage() {
     }
 
     try {
-      await allowancesApi.delete(item.id);
-      loadAllowances(); // Refresh
+      await signingBonusesApi.delete(item._id);
+      loadSigningBonuses(); // Refresh
     } catch (error) {
-      console.error('Error deleting allowance:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete allowance');
+      console.error('Error deleting signing bonus:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete signing bonus');
     }
   };
 
   const getStatusCount = (status: 'draft' | 'approved' | 'rejected') => {
-    return allAllowances.filter(g => {
+    return allSigningBonuses.filter(g => {
       const normalizedStatus = String(g.status || '').toLowerCase();
       return normalizedStatus === status;
     }).length;
@@ -139,8 +122,8 @@ export default function AllowancesPage() {
     <div className="p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Allowances</h1>
-          <p className="text-gray-600 mt-1">Manage employee allowances (housing, transportation, meal, etc.)</p>
+          <h1 className="text-2xl font-bold text-gray-900">Signing Bonuses</h1>
+          <p className="text-gray-600 mt-1">Manage signing bonus configurations for new employees</p>
         </div>
         <button
           onClick={handleCreateNew}
@@ -149,7 +132,7 @@ export default function AllowancesPage() {
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
           </svg>
-          Create New Allowance
+          Create New Signing Bonus
         </button>
       </div>
 
@@ -160,7 +143,7 @@ export default function AllowancesPage() {
             <div className="flex items-center">
               <StatusBadge status={status} size="sm" />
               <div className="ml-3">
-                <p className="text-sm text-gray-500">{status.charAt(0).toUpperCase() + status.slice(1)} Allowances</p>
+                <p className="text-sm text-gray-500">{status.charAt(0).toUpperCase() + status.slice(1)} Bonuses</p>
                 <p className="text-2xl font-bold">{getStatusCount(status)}</p>
               </div>
             </div>
@@ -187,16 +170,17 @@ export default function AllowancesPage() {
           </div>
 
           <ConfigurationTable
-            data={allowances}
+            data={signingBonuses}
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
             isLoading={isLoading}
-            emptyMessage="No allowances found. Create your first allowance to get started."
+            emptyMessage="No signing bonuses found. Create your first signing bonus to get started."
           />
         </div>
       </div>
     </div>
   );
 }
+

@@ -59,7 +59,17 @@ export const payGradesApi = {
   getAll: async (status?: 'draft' | 'approved' | 'rejected'): Promise<PayGrade[]> => {
     try {
       const response = await api.get('/payroll-configuration/pay-grades');
-      let payGrades = Array.isArray(response) ? response : response.data || response.items || [];
+      let payGrades: any[] = [];
+      if (Array.isArray(response)) {
+        payGrades = response;
+      } else if (response && typeof response === 'object') {
+        if ('data' in response) {
+          const data = (response as any).data;
+          payGrades = Array.isArray(data) ? data : (data?.items && Array.isArray(data.items) ? data.items : []);
+        } else if ('items' in response && Array.isArray((response as any).items)) {
+          payGrades = (response as any).items;
+        }
+      }
       
       // Map each item from backend to frontend format
       payGrades = payGrades.map(mapBackendToFrontend);

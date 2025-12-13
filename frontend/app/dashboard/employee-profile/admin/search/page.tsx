@@ -110,12 +110,12 @@ export default function EmployeeManagementPage() {
           ) {
             departmentsData = deptResponse.data.data;
             console.log("✅ Found data in response.data.data");
-          } else if (Array.isArray(deptResponse.items)) {
-            departmentsData = deptResponse.items;
-            console.log("✅ Found data in response.items");
-          } else if (Array.isArray(deptResponse.content)) {
-            departmentsData = deptResponse.content;
-            console.log("✅ Found data in response.content");
+          } else if (deptResponse.data && Array.isArray(deptResponse.data.items)) {
+            departmentsData = deptResponse.data.items;
+            console.log("✅ Found data in response.data.items");
+          } else if (deptResponse.data && Array.isArray(deptResponse.data.content)) {
+            departmentsData = deptResponse.data.content;
+            console.log("✅ Found data in response.data.content");
           }
         }
 
@@ -275,9 +275,9 @@ export default function EmployeeManagementPage() {
         country: employee.address?.country || "",
       },
 
-      // Banking
-      bankName: employee.bankName || "",
-      bankAccountNumber: employee.bankAccountNumber || "",
+      // Banking (not part of EmployeeProfile type, set to empty)
+      bankName: "",
+      bankAccountNumber: "",
 
       // Biography
       biography: employee.biography || "",
@@ -1360,7 +1360,7 @@ export default function EmployeeManagementPage() {
                               className="flex items-center gap-1"
                               variant={
                                 editingId === (employee.id || employee._id)
-                                  ? "default"
+                                  ? "primary"
                                   : "outline"
                               }
                             >

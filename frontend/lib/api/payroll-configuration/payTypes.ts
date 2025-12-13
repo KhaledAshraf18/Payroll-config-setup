@@ -57,7 +57,17 @@ export const payTypesApi = {
   getAll: async (status?: 'draft' | 'approved' | 'rejected'): Promise<PayType[]> => {
     try {
       const response = await api.get('/payroll-configuration/pay-types');
-      let payTypes = Array.isArray(response) ? response : response.data || response.items || [];
+      let payTypes: any[] = [];
+      if (Array.isArray(response)) {
+        payTypes = response;
+      } else if (response && typeof response === 'object') {
+        if ('data' in response) {
+          const data = (response as any).data;
+          payTypes = Array.isArray(data) ? data : (data?.items && Array.isArray(data.items) ? data.items : []);
+        } else if ('items' in response && Array.isArray((response as any).items)) {
+          payTypes = (response as any).items;
+        }
+      }
       
       // Map each item from backend to frontend format
       payTypes = payTypes.map(mapBackendToFrontend);

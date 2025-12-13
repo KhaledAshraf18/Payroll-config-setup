@@ -52,6 +52,21 @@ export interface InsuranceBracket {
   updatedAt?: string;
 }
 
+export interface CreateInsuranceBracketDto {
+  minSalary: number;
+  maxSalary: number;
+  employeeContribution: number;
+  employerContribution: number;
+  status: 'draft';
+}
+
+export interface UpdateInsuranceBracketDto {
+  minSalary?: number;
+  maxSalary?: number;
+  employeeContribution?: number;
+  employerContribution?: number;
+}
+
 export interface ConfigurationStats {
   total: number;
   pending: number;

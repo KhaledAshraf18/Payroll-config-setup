@@ -130,14 +130,16 @@ export const employeeProfileApi = {
 
     // Handle paginated response
     if (response && typeof response === "object" && "data" in response) {
-      return response as {
-        data: EmployeeProfile[];
-        meta: {
-          total: number;
-          page: number;
-          limit: number;
-          totalPages: number;
-        };
+      const responseData = response as any;
+      const employees = Array.isArray(responseData.data) ? responseData.data : [];
+      return {
+        data: employees,
+        meta: responseData.meta || {
+          total: employees.length,
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          totalPages: Math.ceil(employees.length / (params?.limit || 10)),
+        },
       };
     }
 

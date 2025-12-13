@@ -112,7 +112,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles =
       "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:border-gray-300 disabled:cursor-not-allowed disabled:opacity-100";
 
-    const variants = {
+    const variants: Record<typeof variant, string> = {
       primary:
         "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-700",
       secondary:
@@ -121,6 +121,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         "border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-600 disabled:border-gray-300",
       ghost:
         "bg-transparent text-gray-900 hover:bg-gray-100 disabled:bg-gray-100 disabled:text-gray-600",
+      danger:
+        "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300 disabled:text-gray-700",
     };
     const sizes = {
       sm: "h-9 px-3 text-sm",
