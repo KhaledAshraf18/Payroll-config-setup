@@ -191,7 +191,8 @@ export default function AllowancesPage() {
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={undefined}
+            canDelete={() => false}
             isLoading={isLoading}
             emptyMessage="No allowances found. Create your first allowance to get started."
           />

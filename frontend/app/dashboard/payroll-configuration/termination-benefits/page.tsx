@@ -192,7 +192,8 @@ export default function TerminationBenefitsPage() {
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={undefined}
+            canDelete={() => false}
             isLoading={isLoading}
             emptyMessage="No termination benefits found. Create your first termination benefit to get started."
           />

@@ -13,11 +13,8 @@ export default function NewSigningBonusPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
+    positionName: '',
     amount: '',
-    paymentTerms: '',
-    eligibilityCriteria: '',
-    description: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,26 +24,20 @@ export default function NewSigningBonusPage() {
     
     try {
       // Validate form data
-      if (!formData.name.trim()) {
-        throw new Error('Signing bonus name is required');
+      if (!formData.positionName.trim()) {
+        throw new Error('Position name is required');
       }
       if (!formData.amount || parseFloat(formData.amount) < 0) {
         throw new Error('Signing bonus amount must be non-negative');
       }
-      if (!formData.paymentTerms.trim()) {
-        throw new Error('Payment terms are required');
-      }
       
-      // Prepare data for API
+      // Prepare data for API - backend only expects positionName and amount
       const signingBonusData = {
-        name: formData.name,
+        positionName: formData.positionName.trim(),
         amount: parseFloat(formData.amount),
-        paymentTerms: formData.paymentTerms,
-        eligibilityCriteria: formData.eligibilityCriteria || undefined,
-        description: formData.description || undefined,
-        status: 'draft' as const,
       };
       
+      console.log('Creating signing bonus with data:', signingBonusData);
       await signingBonusesApi.create(signingBonusData);
       
       // Redirect back to list
@@ -88,16 +79,16 @@ export default function NewSigningBonusPage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Bonus Name *
+                Position Name *
               </label>
               <input
                 type="text"
-                name="name"
-                value={formData.name}
+                name="positionName"
+                value={formData.positionName}
                 onChange={handleChange}
                 required
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., Senior Developer Signing Bonus"
+                placeholder="e.g., Senior Developer"
               />
             </div>
 
@@ -115,49 +106,6 @@ export default function NewSigningBonusPage() {
                 step="0.01"
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="0.00"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Payment Terms *
-              </label>
-              <textarea
-                name="paymentTerms"
-                value={formData.paymentTerms}
-                onChange={handleChange}
-                required
-                rows={2}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., Paid in full on first paycheck"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Eligibility Criteria
-              </label>
-              <textarea
-                name="eligibilityCriteria"
-                value={formData.eligibilityCriteria}
-                onChange={handleChange}
-                rows={3}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Describe who is eligible for this bonus..."
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Additional details about this signing bonus..."
               />
             </div>
           </div>

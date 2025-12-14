@@ -14,11 +14,8 @@ export default function NewTerminationBenefitPage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    benefitType: 'severance' as 'severance' | 'resignation' | 'retirement' | 'other',
-    calculationMethod: '',
-    eligibilityCriteria: '',
     amount: '',
-    description: '',
+    terms: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,21 +28,22 @@ export default function NewTerminationBenefitPage() {
       if (!formData.name.trim()) {
         throw new Error('Termination benefit name is required');
       }
-      if (!formData.calculationMethod.trim()) {
-        throw new Error('Calculation method is required');
+      if (!formData.amount || parseFloat(formData.amount) < 0) {
+        throw new Error('Termination benefit amount must be non-negative');
       }
       
-      // Prepare data for API
-      const terminationBenefitData = {
-        name: formData.name,
-        benefitType: formData.benefitType as 'severance' | 'resignation' | 'retirement' | 'other',
-        calculationMethod: formData.calculationMethod,
-        eligibilityCriteria: formData.eligibilityCriteria || undefined,
-        amount: formData.amount ? parseFloat(formData.amount) : undefined,
-        description: formData.description || undefined,
-        status: 'draft' as const,
+      // Prepare data for API - backend expects name, amount, and optional terms
+      const terminationBenefitData: any = {
+        name: formData.name.trim(),
+        amount: parseFloat(formData.amount),
       };
       
+      // Only include terms if it's not empty
+      if (formData.terms && formData.terms.trim()) {
+        terminationBenefitData.terms = formData.terms.trim();
+      }
+      
+      console.log('Creating termination benefit with data:', terminationBenefitData);
       await terminationBenefitsApi.create(terminationBenefitData);
       
       // Redirect back to list
@@ -102,78 +100,32 @@ export default function NewTerminationBenefitPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Benefit Type *
-              </label>
-              <select
-                name="benefitType"
-                value={formData.benefitType}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="severance">Severance</option>
-                <option value="resignation">Resignation</option>
-                <option value="retirement">Retirement</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Calculation Method *
-              </label>
-              <textarea
-                name="calculationMethod"
-                value={formData.calculationMethod}
-                onChange={handleChange}
-                required
-                rows={2}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., 1 month salary per year of service"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Fixed Amount (EGP) - Optional
+                Amount (EGP) *
               </label>
               <input
                 type="number"
                 name="amount"
                 value={formData.amount}
                 onChange={handleChange}
+                required
                 min="0"
                 step="0.01"
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Leave empty if calculated"
+                placeholder="0.00"
               />
             </div>
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700">
-                Eligibility Criteria
+                Terms and Conditions (Optional)
               </label>
               <textarea
-                name="eligibilityCriteria"
-                value={formData.eligibilityCriteria}
+                name="terms"
+                value={formData.terms}
                 onChange={handleChange}
                 rows={3}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Describe who is eligible for this benefit..."
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Additional details about this termination benefit..."
+                placeholder="Enter terms and conditions for this benefit..."
               />
             </div>
           </div>

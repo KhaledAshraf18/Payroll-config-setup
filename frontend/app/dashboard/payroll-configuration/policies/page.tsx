@@ -258,7 +258,8 @@ export default function PoliciesPage() {
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={undefined}
+            canDelete={() => false}
             isLoading={isLoading}
             emptyMessage={statusFilter !== 'all' ? `No ${statusFilter} policies found.` : 'No policies created yet. Start by creating your first policy.'}
           />

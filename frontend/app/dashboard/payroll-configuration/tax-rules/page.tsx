@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useRequireAuth } from '@/lib/hooks/use-auth';
+import { useRequireAuth, useAuth } from '@/lib/hooks/use-auth';
 import { SystemRole } from '@/types';
 import ConfigurationTable from '@/components/payroll-configuration/ConfigurationTable';
 import StatusBadge from '@/components/payroll-configuration/StatusBadge';
@@ -10,8 +10,25 @@ import { taxRulesApi } from '@/lib/api/payroll-configuration/tax-rules';
 import { TaxRule } from '@/lib/api/payroll-configuration/types';
 
 export default function TaxRulesPage() {
-  // Only Legal Admin can create/edit tax rules
-  useRequireAuth(SystemRole.LEGAL_POLICY_ADMIN, '/dashboard');
+  // Allow view access for multiple roles, but only Legal Admin can create/edit
+  useRequireAuth(
+    [
+      SystemRole.LEGAL_POLICY_ADMIN,
+      SystemRole.PAYROLL_SPECIALIST,
+      SystemRole.PAYROLL_MANAGER,
+      SystemRole.SYSTEM_ADMIN,
+      SystemRole.HR_MANAGER,
+      SystemRole.HR_ADMIN,
+      SystemRole.DEPARTMENT_EMPLOYEE,
+      SystemRole.DEPARTMENT_HEAD,
+    ],
+    '/dashboard'
+  );
+  
+  const { user } = useAuth();
+  const isLegalAdmin = user?.roles?.some(role => 
+    String(role).toLowerCase() === String(SystemRole.LEGAL_POLICY_ADMIN).toLowerCase()
+  );
   
   const router = useRouter();
   const [taxRules, setTaxRules] = useState<TaxRule[]>([]);
@@ -60,7 +77,7 @@ export default function TaxRulesPage() {
           item.taxType === 'health' ? 'bg-purple-100 text-purple-800' :
           'bg-gray-100 text-gray-800'
         }`}>
-          {item.taxType.replace('_', ' ')}
+          {item.taxType ? String(item.taxType).replace('_', ' ') : 'Unknown'}
         </span>
       )
     },
@@ -96,11 +113,22 @@ export default function TaxRulesPage() {
   };
 
   const handleEdit = (item: TaxRule) => {
+    // Only Legal Admin can edit
+    if (!isLegalAdmin) {
+      alert('Only Legal Admin can edit tax rules.');
+      return;
+    }
     // Tax rules can be edited even if approved (they go back to draft)
     router.push(`/dashboard/payroll-configuration/tax-rules/${item._id}/edit`);
   };
 
   const handleDelete = async (item: TaxRule) => {
+    // Only Legal Admin can delete
+    if (!isLegalAdmin) {
+      alert('Only Legal Admin can delete tax rules.');
+      return;
+    }
+    
     if (item.status !== 'draft') {
       alert('Only draft tax rules can be deleted.');
       return;
@@ -131,17 +159,21 @@ export default function TaxRulesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Tax Rules</h1>
-          <p className="text-gray-600 mt-1">Manage tax rules and rates (Legal Admin only)</p>
+          <p className="text-gray-600 mt-1">
+            {isLegalAdmin ? 'Manage tax rules and rates' : 'View tax rules and rates (Read-only)'}
+          </p>
         </div>
-        <button
-          onClick={handleCreateNew}
-          className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 flex items-center"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          Create New Tax Rule
-        </button>
+        {isLegalAdmin && (
+          <button
+            onClick={handleCreateNew}
+            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Create New Tax Rule
+          </button>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -181,10 +213,12 @@ export default function TaxRulesPage() {
             data={taxRules}
             columns={columns}
             onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
+            onEdit={isLegalAdmin ? handleEdit : undefined}
+            onDelete={isLegalAdmin ? handleDelete : undefined}
+            canEdit={isLegalAdmin ? () => true : () => false}
+            canDelete={isLegalAdmin ? (item) => item.status === 'draft' : () => false}
             isLoading={isLoading}
-            emptyMessage="No tax rules found. Create your first tax rule to get started."
+            emptyMessage="No tax rules found."
           />
         </div>
       </div>

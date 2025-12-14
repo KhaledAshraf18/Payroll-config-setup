@@ -176,7 +176,8 @@ export default function InsuranceBracketsPage() {
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={undefined}
+            canDelete={() => false}
             isLoading={isLoading}
             emptyMessage="No insurance brackets found. Create your first insurance bracket to get started."
           />

@@ -103,13 +103,14 @@ export const policiesApi = {
       const response = await api.get('/payroll-configuration/policies', { params });
       
       // Handle different response structures
+      // Response interceptor already extracts response.data, so response is already the data
       let policies = [];
       if (Array.isArray(response)) {
         policies = response;
-      } else if (response?.data && Array.isArray(response.data)) {
-        policies = response.data;
       } else if (response && typeof response === 'object' && 'items' in response && Array.isArray((response as any).items)) {
         policies = (response as any).items;
+      } else if (response && typeof response === 'object' && 'data' in response && Array.isArray((response as any).data)) {
+        policies = (response as any).data;
       }
       
       return policies.map(mapBackendToFrontend);
@@ -123,8 +124,8 @@ export const policiesApi = {
   getById: async (id: string): Promise<PayrollPolicy> => {
     try {
       const response = await api.get(`/payroll-configuration/policies/${id}`);
-      const data = response?.data || response;
-      return mapBackendToFrontend(data);
+      // Response interceptor already extracts response.data
+      return mapBackendToFrontend(response);
     } catch (error) {
       console.error(`Error fetching policy ${id}:`, error);
       throw error;
@@ -136,8 +137,8 @@ export const policiesApi = {
     try {
       const backendData = mapFrontendToBackend(data);
       const response = await api.post('/payroll-configuration/policies', backendData);
-      const responseData = response?.data || response;
-      return mapBackendToFrontend(responseData);
+      // Response interceptor already extracts response.data
+      return mapBackendToFrontend(response);
     } catch (error) {
       console.error('Error creating policy:', error);
       throw error;
@@ -149,8 +150,8 @@ export const policiesApi = {
     try {
       const backendData = mapFrontendToBackend(data);
       const response = await api.put(`/payroll-configuration/policies/${id}`, backendData);
-      const responseData = response?.data || response;
-      return mapBackendToFrontend(responseData);
+      // Response interceptor already extracts response.data
+      return mapBackendToFrontend(response);
     } catch (error) {
       console.error(`Error updating policy ${id}:`, error);
       throw error;

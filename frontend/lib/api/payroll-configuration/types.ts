@@ -53,18 +53,21 @@ export interface InsuranceBracket {
 }
 
 export interface CreateInsuranceBracketDto {
+  name: string;
   minSalary: number;
   maxSalary: number;
-  employeeContribution: number;
-  employerContribution: number;
-  status: 'draft';
+  employeeRate: number;
+  employerRate: number;
+  amount?: number;
 }
 
 export interface UpdateInsuranceBracketDto {
+  name?: string;
   minSalary?: number;
   maxSalary?: number;
-  employeeContribution?: number;
-  employerContribution?: number;
+  employeeRate?: number;
+  employerRate?: number;
+  amount?: number;
 }
 
 export interface ConfigurationStats {
@@ -203,20 +206,13 @@ export interface SigningBonus {
 }
 
 export interface CreateSigningBonusDto {
-  name: string;
+  positionName: string;
   amount: number;
-  paymentTerms: string;
-  eligibilityCriteria?: string;
-  description?: string;
-  status: 'draft';
 }
 
 export interface UpdateSigningBonusDto {
-  name?: string;
+  positionName?: string;
   amount?: number;
-  paymentTerms?: string;
-  eligibilityCriteria?: string;
-  description?: string;
 }
 
 
@@ -241,21 +237,14 @@ export interface TerminationBenefit {
 
 export interface CreateTerminationBenefitDto {
   name: string;
-  benefitType: 'severance' | 'resignation' | 'retirement' | 'other';
-  calculationMethod: string;
-  eligibilityCriteria?: string;
-  amount?: number;
-  description?: string;
-  status: 'draft';
+  amount: number;
+  terms?: string;
 }
 
 export interface UpdateTerminationBenefitDto {
   name?: string;
-  benefitType?: 'severance' | 'resignation' | 'retirement' | 'other';
-  calculationMethod?: string;
-  eligibilityCriteria?: string;
   amount?: number;
-  description?: string;
+  terms?: string;
 }
 
 
@@ -287,28 +276,14 @@ export interface TaxRule {
 
 export interface CreateTaxRuleDto {
   name: string;
-  taxType: 'income' | 'social_security' | 'health' | 'other';
   rate: number;
-  brackets?: Array<{
-    min: number;
-    max?: number;
-    rate: number;
-  }>;
   description?: string;
-  status: 'draft';
 }
 
 export interface UpdateTaxRuleDto {
   name?: string;
-  taxType?: 'income' | 'social_security' | 'health' | 'other';
   rate?: number;
-  brackets?: Array<{
-    min: number;
-    max?: number;
-    rate: number;
-  }>;
   description?: string;
-  status?: 'draft';
 }
 
 

@@ -15,22 +15,14 @@ export default function PayrollConfigurationLayout({
     { href: '/dashboard/payroll-configuration/pay-grades', label: 'Pay Grades' },
     { href: '/dashboard/payroll-configuration/pay-types', label: 'Pay Types' },
     { href: '/dashboard/payroll-configuration/allowances', label: 'Allowances' },
+    { href: '/dashboard/payroll-configuration/signing-bonuses', label: 'Signing Bonuses' },
+    { href: '/dashboard/payroll-configuration/termination-benefits', label: 'Termination Benefits' },
+    { href: '/dashboard/payroll-configuration/insurance-brackets', label: 'Insurance Brackets' },
+    { href: '/dashboard/payroll-configuration/tax-rules', label: 'Tax Rules' },
   ];
 
   const isActive = (href: string) => {
-    if (href === '/dashboard/payroll-configuration/policies') {
-      return pathname?.startsWith('/dashboard/payroll-configuration/policies');
-    }
-    if (href === '/dashboard/payroll-configuration/pay-grades') {
-      return pathname?.startsWith('/dashboard/payroll-configuration/pay-grades');
-    }
-    if (href === '/dashboard/payroll-configuration/pay-types') {
-      return pathname?.startsWith('/dashboard/payroll-configuration/pay-types');
-    }
-    if (href === '/dashboard/payroll-configuration/allowances') {
-      return pathname?.startsWith('/dashboard/payroll-configuration/allowances');
-    }
-    return false;
+    return pathname?.startsWith(href) || false;
   };
 
   return (

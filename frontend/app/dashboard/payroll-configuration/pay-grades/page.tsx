@@ -205,7 +205,8 @@ export default function PayGradesPage() {
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={undefined}
+            canDelete={() => false}
             isLoading={isLoading}
             emptyMessage="No pay grades found. Create your first pay grade to get started."
           />

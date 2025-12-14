@@ -15,12 +15,9 @@ export default function EditTaxRulePage() {
 
   const [formData, setFormData] = useState({
     name: '',
-    taxType: 'income' as 'income' | 'social_security' | 'health' | 'other',
     rate: '',
     description: '',
-    brackets: [] as Array<{ min: number; max?: number; rate: number }>,
   });
-  const [showBrackets, setShowBrackets] = useState(false);
 
   useEffect(() => {
     loadTaxRule();
@@ -32,12 +29,9 @@ export default function EditTaxRulePage() {
       const taxRule = await taxRulesApi.getById(taxRuleId);
       setFormData({
         name: taxRule.name || '',
-        taxType: taxRule.taxType || 'income',
-        rate: String(taxRule.rate || ''),
+        rate: String(taxRule.rate ?? ''),
         description: taxRule.description || '',
-        brackets: taxRule.brackets || [],
       });
-      setShowBrackets(!!(taxRule.brackets && taxRule.brackets.length > 0));
     } catch (err) {
       console.error('Error loading tax rule:', err);
       setError(err instanceof Error ? err.message : 'Failed to load tax rule');
@@ -60,16 +54,14 @@ export default function EditTaxRulePage() {
         throw new Error('Tax rate must be between 0 and 100');
       }
       
-      // Prepare data for API - editing approved rules sets them back to draft
+      // Prepare data for API - backend only expects name, rate, and optional description
       const taxRuleData = {
-        name: formData.name,
-        taxType: formData.taxType as 'income' | 'social_security' | 'health' | 'other',
+        name: formData.name.trim(),
         rate: parseFloat(formData.rate),
-        description: formData.description || undefined,
-        brackets: formData.brackets.length > 0 ? formData.brackets : undefined,
-        status: 'draft' as const, // Always set to draft when editing
+        description: formData.description?.trim() || undefined,
       };
       
+      console.log('Updating tax rule with data:', taxRuleData);
       await taxRulesApi.update(taxRuleId, taxRuleData);
       
       // Redirect to tax rules list
@@ -89,28 +81,6 @@ export default function EditTaxRulePage() {
     }));
   };
 
-  const addBracket = () => {
-    setFormData(prev => ({
-      ...prev,
-      brackets: [...prev.brackets, { min: 0, rate: 0 }]
-    }));
-  };
-
-  const removeBracket = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      brackets: prev.brackets.filter((_, i) => i !== index)
-    }));
-  };
-
-  const updateBracket = (index: number, field: 'min' | 'max' | 'rate', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      brackets: prev.brackets.map((bracket, i) => 
-        i === index ? { ...bracket, [field]: field === 'max' && value === '' ? undefined : parseFloat(value) || 0 } : bracket
-      )
-    }));
-  };
 
   if (isLoadingData) {
     return (
@@ -158,24 +128,6 @@ export default function EditTaxRulePage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Tax Type *
-              </label>
-              <select
-                name="taxType"
-                value={formData.taxType}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="income">Income Tax</option>
-                <option value="social_security">Social Security</option>
-                <option value="health">Health Tax</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
                 Base Rate (%) *
               </label>
               <input
@@ -204,69 +156,6 @@ export default function EditTaxRulePage() {
               />
             </div>
 
-            <div className="sm:col-span-2">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Progressive Tax Brackets (Optional)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowBrackets(!showBrackets)}
-                  className="text-sm text-indigo-600 hover:text-indigo-700"
-                >
-                  {showBrackets ? 'Hide' : 'Show'} Brackets
-                </button>
-              </div>
-              {showBrackets && (
-                <div className="mt-4 space-y-4">
-                  {formData.brackets.map((bracket, index) => (
-                    <div key={index} className="flex gap-4 items-end">
-                      <div className="flex-1">
-                        <label className="block text-xs text-gray-500">Min Amount</label>
-                        <input
-                          type="number"
-                          value={bracket.min}
-                          onChange={(e) => updateBracket(index, 'min', e.target.value)}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-xs text-gray-500">Max Amount (optional)</label>
-                        <input
-                          type="number"
-                          value={bracket.max || ''}
-                          onChange={(e) => updateBracket(index, 'max', e.target.value)}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-xs text-gray-500">Rate (%)</label>
-                        <input
-                          type="number"
-                          value={bracket.rate}
-                          onChange={(e) => updateBracket(index, 'rate', e.target.value)}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeBracket(index)}
-                        className="px-3 py-2 text-red-600 hover:text-red-700 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addBracket}
-                    className="text-sm text-indigo-600 hover:text-indigo-700"
-                  >
-                    + Add Bracket
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">

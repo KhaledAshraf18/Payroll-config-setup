@@ -174,7 +174,8 @@ export default function SigningBonusesPage() {
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={undefined}
+            canDelete={() => false}
             isLoading={isLoading}
             emptyMessage="No signing bonuses found. Create your first signing bonus to get started."
           />

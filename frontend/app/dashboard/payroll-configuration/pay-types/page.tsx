@@ -186,7 +186,8 @@ export default function PayTypesPage() {
             columns={columns}
             onView={handleView}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={undefined}
+            canDelete={() => false}
             isLoading={isLoading}
             emptyMessage="No pay types found. Create your first pay type to get started."
           />
