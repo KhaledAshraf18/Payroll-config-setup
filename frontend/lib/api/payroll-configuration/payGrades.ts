@@ -25,33 +25,36 @@ const normalizeStatus = (status: any): 'draft' | 'approved' | 'rejected' => {
 
 // Helper function to map backend response to frontend type
 const mapBackendToFrontend = (backendData: any): PayGrade => {
+  // Map all fields from backend, including optional ones that exist in the database
+  // Even though the DTOs don't accept them during create/update, they may exist in the DB
   return {
     id: backendData._id || backendData.id,
-    name: backendData.grade || backendData.name || '',
-    description: backendData.description || '',
+    name: backendData.grade ?? backendData.name ?? '',
+    description: backendData.description ?? '',
     status: normalizeStatus(backendData.status),
     createdBy: extractUserName(backendData.createdBy),
     createdAt: backendData.createdAt || new Date().toISOString(),
     updatedAt: backendData.updatedAt || new Date().toISOString(),
     version: backendData.version || 1,
-    minSalary: backendData.baseSalary || 0,
-    maxSalary: backendData.grossSalary || 0,
-    currency: backendData.currency || 'EGP',
-    jobGrade: backendData.jobGrade || '',
-    jobBand: backendData.jobBand || '',
-    benefits: backendData.benefits || [],
-    isActive: backendData.isActive !== false,
+    minSalary: backendData.baseSalary ?? 0,
+    maxSalary: backendData.grossSalary ?? 0,
+    currency: backendData.currency ?? 'EGP',
+    jobGrade: backendData.jobGrade ?? '',
+    jobBand: backendData.jobBand ?? '',
+    benefits: Array.isArray(backendData.benefits) ? backendData.benefits : (backendData.benefits ? [backendData.benefits] : []),
+    isActive: backendData.isActive !== undefined ? backendData.isActive : true,
     comments: backendData.comments,
     approvedBy: extractUserName(backendData.approvedBy),
   };
 };
 
 // Helper function to map frontend type to backend DTO
+// Backend DTO ONLY accepts: grade, baseSalary, grossSalary
 const mapFrontendToBackend = (frontendData: any) => {
   return {
-    grade: frontendData.name || frontendData.grade,
-    baseSalary: parseFloat(frontendData.minSalary) || parseFloat(frontendData.baseSalary) || 0,
-    grossSalary: parseFloat(frontendData.maxSalary) || parseFloat(frontendData.grossSalary) || 0,
+    grade: frontendData.name || frontendData.grade || '',
+    baseSalary: parseFloat(String(frontendData.minSalary || frontendData.baseSalary || 0)),
+    grossSalary: parseFloat(String(frontendData.maxSalary || frontendData.grossSalary || 0)),
   };
 };
 
@@ -100,39 +103,77 @@ export const payGradesApi = {
 
   create: async (data: Omit<PayGrade, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'status' | 'createdBy'>): Promise<PayGrade> => {
     try {
-      // Map frontend data to backend DTO format
-      const backendData = mapFrontendToBackend(data);
+      // Backend DTO ONLY accepts: grade, baseSalary, grossSalary
+      const name = String(data.name || '').trim();
+      const minSalary = parseFloat(String(data.minSalary));
+      const maxSalary = parseFloat(String(data.maxSalary));
       
       // Validate required fields
-      if (!backendData.grade) {
+      if (!name) {
         throw new Error('Pay grade name is required');
       }
-      if (!backendData.baseSalary || backendData.baseSalary < 6000) {
+      if (isNaN(minSalary) || minSalary < 6000) {
         throw new Error('Base salary must be at least 6000');
       }
-      if (!backendData.grossSalary || backendData.grossSalary < 6000) {
+      if (isNaN(maxSalary) || maxSalary < 6000) {
         throw new Error('Gross salary must be at least 6000');
       }
-      if (backendData.grossSalary < backendData.baseSalary) {
+      if (maxSalary < minSalary) {
         throw new Error('Gross salary must be greater than or equal to base salary');
       }
       
+      // Build backend data with ONLY fields in DTO
+      const backendData = {
+        grade: name,
+        baseSalary: Number(minSalary),
+        grossSalary: Number(maxSalary),
+      };
+      
       const response = await api.post('/payroll-configuration/pay-grades', backendData);
       return mapBackendToFrontend(response);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating pay grade:', error);
-      throw error;
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Failed to create pay grade';
+      throw new Error(errorMessage);
     }
   },
 
   update: async (id: string, data: Partial<PayGrade>): Promise<PayGrade> => {
     try {
-      // Map frontend data to backend DTO format
+      // Only send fields that the backend DTO accepts
+      // The running backend server only accepts: grade, baseSalary, grossSalary
       const backendData: any = {};
       
-      if (data.name !== undefined) backendData.grade = data.name;
-      if (data.minSalary !== undefined) backendData.baseSalary = parseFloat(String(data.minSalary));
-      if (data.maxSalary !== undefined) backendData.grossSalary = parseFloat(String(data.maxSalary));
+      if (data.name !== undefined && data.name !== null && String(data.name).trim() !== '') {
+        backendData.grade = String(data.name).trim();
+      }
+      if (data.minSalary !== undefined && data.minSalary !== null) {
+        const baseSalary = parseFloat(String(data.minSalary));
+        if (!isNaN(baseSalary) && baseSalary >= 6000) {
+          backendData.baseSalary = baseSalary;
+        }
+      }
+      if (data.maxSalary !== undefined && data.maxSalary !== null) {
+        const grossSalary = parseFloat(String(data.maxSalary));
+        if (!isNaN(grossSalary) && grossSalary >= 6000) {
+          backendData.grossSalary = grossSalary;
+        }
+      }
+      
+      // Validate that at least one field is being updated
+      if (Object.keys(backendData).length === 0) {
+        throw new Error('At least one field must be provided for update');
+      }
+      
+      // Validate salary relationship if both are provided
+      if (backendData.baseSalary !== undefined && backendData.grossSalary !== undefined) {
+        if (backendData.grossSalary < backendData.baseSalary) {
+          throw new Error('Gross salary must be greater than or equal to base salary');
+        }
+      }
       
       const response = await api.put(`/payroll-configuration/pay-grades/${id}`, backendData);
       return mapBackendToFrontend(response);

@@ -68,7 +68,7 @@ export default function SigningBonusDetailsPage() {
             ← Back
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{signingBonus.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{(signingBonus as any).positionName || signingBonus.name || 'Signing Bonus'}</h1>
             <div className="flex items-center space-x-2 mt-1">
               <StatusBadge status={signingBonus.status} />
               <span className="text-sm text-gray-500">ID: {signingBonus._id}</span>
@@ -91,14 +91,11 @@ export default function SigningBonusDetailsPage() {
         <div className="lg:col-span-2 bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Signing Bonus Details</h2>
           <div className="space-y-6">
-            {signingBonus.description && (
-              <div>
-                <label className="text-sm font-medium text-gray-500">Description</label>
-                <p className="mt-1 text-gray-700">{signingBonus.description}</p>
-              </div>
-            )}
-            
             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-500">Position Name</label>
+                <p className="mt-1 text-gray-900">{(signingBonus as any).positionName || signingBonus.name || 'N/A'}</p>
+              </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Amount</label>
                 <p className="mt-1 text-gray-900">
@@ -108,16 +105,6 @@ export default function SigningBonusDetailsPage() {
                   }).format(signingBonus.amount)}
                 </p>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Payment Terms</label>
-                <p className="mt-1 text-gray-900">{signingBonus.paymentTerms}</p>
-              </div>
-              {signingBonus.eligibilityCriteria && (
-                <div className="sm:col-span-2">
-                  <label className="text-sm font-medium text-gray-500">Eligibility Criteria</label>
-                  <p className="mt-1 text-gray-700">{signingBonus.eligibilityCriteria}</p>
-                </div>
-              )}
             </div>
           </div>
         </div>

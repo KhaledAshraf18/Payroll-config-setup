@@ -24,11 +24,11 @@ const normalizeStatus = (status: any): 'draft' | 'approved' | 'rejected' => {
 };
 
 // Helper function to map backend response to frontend type
-const mapBackendToFrontend = (backendData: any): PayrollPolicy => {
+const mapBackendToFrontend = (backendData: any): PayrollPolicy & { applicability?: string } => {
   return {
     id: backendData._id || backendData.id,
     name: backendData.policyName || backendData.name,
-    description: backendData.description || '',
+    description: backendData.description ?? '',
     status: normalizeStatus(backendData.status),
     createdBy: extractUserName(backendData.createdBy),
     createdAt: backendData.createdAt || new Date().toISOString(),
@@ -42,12 +42,14 @@ const mapBackendToFrontend = (backendData: any): PayrollPolicy => {
     comments: backendData.comments,
     approvedBy: extractUserName(backendData.approvedBy),
     approvedAt: backendData.approvedAt,
-  };
+    applicability: backendData.applicability,
+  } as PayrollPolicy & { applicability?: string };
 };
 
 // Helper function to map frontend type to backend DTO
-const mapFrontendToBackend = (frontendData: any) => {
-  // Map frontend policyType to backend enum values if needed
+// Backend DTO accepts: policyName, policyType, description, effectiveDate, ruleDefinition, applicability
+const mapFrontendToBackend = (frontendData: any, isUpdate: boolean = false) => {
+  // Map frontend policyType to backend enum values
   const policyTypeMap: Record<string, string> = {
     'attendance': 'Leave',
     'overtime': 'Allowance',
@@ -56,39 +58,54 @@ const mapFrontendToBackend = (frontendData: any) => {
     'other': 'Benefit',
   };
   
-  const backendPolicyType = policyTypeMap[frontendData.policyType] || frontendData.policyType;
+  const backendData: any = {};
   
-  // Handle ruleDefinition - ensure it has required fields
-  let ruleDefinition = frontendData.rules || frontendData.ruleDefinition;
-  if (!ruleDefinition || typeof ruleDefinition !== 'object') {
-    ruleDefinition = {
-      percentage: 0,
-      fixedAmount: 0,
-      thresholdAmount: 1,
-    };
-  } else {
-    // Convert frontend rules format to backend format
-    // Frontend might send: { overtimeRate: 1.5, maxOvertimeHours: 20 }
-    // Backend expects: { percentage: 0, fixedAmount: 0, thresholdAmount: 1 }
-    // For now, map common fields or use defaults
-    ruleDefinition = {
-      percentage: ruleDefinition.percentage || ruleDefinition.overtimeRate ? (ruleDefinition.overtimeRate - 1) * 100 : 0,
-      fixedAmount: ruleDefinition.fixedAmount || 0,
-      thresholdAmount: ruleDefinition.thresholdAmount || ruleDefinition.maxOvertimeHours || 1,
-    };
+  // Only include fields that are provided (for updates) or required (for creates)
+  if (frontendData.name !== undefined || !isUpdate) {
+    backendData.policyName = frontendData.name || frontendData.policyName;
   }
   
-  // Ensure description is not empty (backend requires it)
-  const description = frontendData.description?.trim() || 'No description provided';
+  if (frontendData.policyType !== undefined || !isUpdate) {
+    backendData.policyType = policyTypeMap[frontendData.policyType] || frontendData.policyType || 'Benefit';
+  }
   
-  return {
-    policyName: frontendData.name || frontendData.policyName,
-    policyType: backendPolicyType,
-    description: description,
-    effectiveDate: frontendData.effectiveDate,
-    ruleDefinition: ruleDefinition,
-    applicability: frontendData.applicability || 'All Employees',
-  };
+  if (frontendData.description !== undefined || !isUpdate) {
+    backendData.description = frontendData.description?.trim() || '';
+  }
+  
+  if (frontendData.effectiveDate !== undefined || !isUpdate) {
+    backendData.effectiveDate = frontendData.effectiveDate;
+  }
+  
+  // Handle ruleDefinition - backend requires percentage, fixedAmount, thresholdAmount
+  if (frontendData.rules !== undefined || frontendData.ruleDefinition !== undefined || !isUpdate) {
+    let ruleDefinition = frontendData.rules || frontendData.ruleDefinition;
+    if (!ruleDefinition || typeof ruleDefinition !== 'object') {
+      ruleDefinition = {
+        percentage: 0,
+        fixedAmount: 0,
+        thresholdAmount: 1,
+      };
+    } else {
+      // Convert frontend rules format to backend format
+      // Frontend might send: { overtimeRate: 1.5, maxOvertimeHours: 20 }
+      // Backend expects: { percentage: 0, fixedAmount: 0, thresholdAmount: 1 }
+      ruleDefinition = {
+        percentage: ruleDefinition.percentage !== undefined ? ruleDefinition.percentage : 
+                    (ruleDefinition.overtimeRate ? (ruleDefinition.overtimeRate - 1) * 100 : 0),
+        fixedAmount: ruleDefinition.fixedAmount !== undefined ? ruleDefinition.fixedAmount : 0,
+        thresholdAmount: ruleDefinition.thresholdAmount !== undefined ? ruleDefinition.thresholdAmount : 
+                       (ruleDefinition.maxOvertimeHours || 1),
+      };
+    }
+    backendData.ruleDefinition = ruleDefinition;
+  }
+  
+  if (frontendData.applicability !== undefined || !isUpdate) {
+    backendData.applicability = frontendData.applicability || 'All Employees';
+  }
+  
+  return backendData;
 };
 
 export const policiesApi = {
@@ -135,7 +152,7 @@ export const policiesApi = {
   // Create new policy
   create: async (data: Omit<PayrollPolicy, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'status' | 'createdBy'>): Promise<PayrollPolicy> => {
     try {
-      const backendData = mapFrontendToBackend(data);
+      const backendData = mapFrontendToBackend(data, false);
       const response = await api.post('/payroll-configuration/policies', backendData);
       // Response interceptor already extracts response.data
       return mapBackendToFrontend(response);
@@ -148,7 +165,7 @@ export const policiesApi = {
   // Update policy
   update: async (id: string, data: Partial<PayrollPolicy>): Promise<PayrollPolicy> => {
     try {
-      const backendData = mapFrontendToBackend(data);
+      const backendData = mapFrontendToBackend(data, true);
       const response = await api.put(`/payroll-configuration/policies/${id}`, backendData);
       // Response interceptor already extracts response.data
       return mapBackendToFrontend(response);

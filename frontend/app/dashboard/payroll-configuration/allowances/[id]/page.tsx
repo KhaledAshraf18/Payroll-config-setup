@@ -1,55 +1,57 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import StatusBadge from '@/components/payroll-configuration/StatusBadge';
-
-type AllowanceStatus = 'draft' | 'approved' |  'rejected';
-
-type Allowance = {
-  id: string;
-  name: string;
-  description: string;
-  status: AllowanceStatus;
-  allowanceType: string;
-  amount: number;
-  currency: string;
-  isRecurring: boolean;
-  frequency: string;
-  taxable: boolean;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  version: number;
-};
+import { allowancesApi } from '@/lib/api/payroll-configuration/allowances';
 
 export default function AllowanceDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const allowanceId = params.id as string;
+  const [allowance, setAllowance] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data with proper typing
-  const allowance: Allowance = {
-    id: allowanceId,
-    name: 'Transportation Allowance',
-    description: 'Monthly transportation support for employees',
-    status: 'approved',
-    allowanceType: 'transportation',
-    amount: 500,
-    currency: 'EGP',
-    isRecurring: true,
-    frequency: 'monthly',
-    taxable: false,
-    createdBy: 'hr.admin@company.com',
-    createdAt: '2024-01-01T10:00:00Z',
-    updatedAt: '2024-01-01T10:00:00Z',
-    version: 1
+  useEffect(() => {
+    loadAllowance();
+  }, [allowanceId]);
+
+  const loadAllowance = async () => {
+    try {
+      const data = await allowancesApi.getById(allowanceId);
+      setAllowance(data);
+    } catch (error) {
+      console.error('Error loading allowance:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEdit = () => {
-    if (allowance.status === 'draft') {
+    if (allowance?.status === 'draft') {
       router.push(`/dashboard/payroll-configuration/allowances/${allowanceId}/edit`);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Loading allowance...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!allowance) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Allowance not found</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -62,7 +64,7 @@ export default function AllowanceDetailsPage() {
             ← Back
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{allowance.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{allowance.name || 'Allowance'}</h1>
             <div className="flex items-center space-x-2 mt-1">
               <StatusBadge status={allowance.status} />
               <span className="text-sm text-gray-500">ID: {allowance.id}</span>
@@ -84,49 +86,20 @@ export default function AllowanceDetailsPage() {
         {/* Details Card */}
         <div className="lg:col-span-2 bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Allowance Details</h2>
-          <div className="space-y-6">
-            <div>
-              <label className="text-sm font-medium text-gray-500">Description</label>
-              <p className="mt-1 text-gray-700">{allowance.description}</p>
-            </div>
-            
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-500">Type</label>
-                <p className="mt-1 capitalize text-gray-900">{allowance.allowanceType}</p>
+                <label className="text-sm font-medium text-gray-500">Allowance Name</label>
+                <p className="mt-1 text-gray-900">{allowance.name || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Amount</label>
-                <p className="mt-1 text-gray-900">
+                <p className="mt-1 text-gray-900 font-medium">
                   {new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: allowance.currency
-                  }).format(allowance.amount)}
+                    currency: 'EGP'
+                  }).format(allowance.amount || 0)}
                 </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Frequency</label>
-                <p className="mt-1 capitalize text-gray-900">{allowance.frequency}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Recurring</label>
-                <p className={`mt-1 inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                  allowance.isRecurring ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {allowance.isRecurring ? 'Yes' : 'No'}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Tax Status</label>
-                <p className={`mt-1 inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                  allowance.taxable ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                }`}>
-                  {allowance.taxable ? 'Taxable' : 'Tax-free'}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Currency</label>
-                <p className="mt-1 text-gray-900">{allowance.currency}</p>
               </div>
             </div>
           </div>
@@ -138,23 +111,37 @@ export default function AllowanceDetailsPage() {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-gray-500">Created By</label>
-              <p className="mt-1 text-sm text-gray-900">{allowance.createdBy}</p>
+              <p className="mt-1 text-sm text-gray-900">
+                {(() => {
+                  const createdBy = allowance.createdBy;
+                  if (!createdBy) return 'N/A';
+                  if (typeof createdBy === 'string') return createdBy;
+                  if (typeof createdBy === 'object') {
+                    const obj = createdBy as any;
+                    if (obj.firstName && obj.lastName) return `${obj.firstName} ${obj.lastName}`;
+                    if (obj.fullName) return obj.fullName;
+                    if (obj.email) return obj.email;
+                    return 'Unknown';
+                  }
+                  return 'N/A';
+                })()}
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Created At</label>
               <p className="mt-1 text-sm text-gray-900">
-                {new Date(allowance.createdAt).toLocaleDateString()}
+                {allowance.createdAt ? new Date(allowance.createdAt).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Last Updated</label>
               <p className="mt-1 text-sm text-gray-900">
-                {new Date(allowance.updatedAt).toLocaleDateString()}
+                {allowance.updatedAt ? new Date(allowance.updatedAt).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Version</label>
-              <p className="mt-1 text-sm text-gray-900">{allowance.version}</p>
+              <p className="mt-1 text-sm text-gray-900">{allowance.version || 1}</p>
             </div>
           </div>
         </div>

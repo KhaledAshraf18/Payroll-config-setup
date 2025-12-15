@@ -27,17 +27,17 @@ const normalizeStatus = (status: any): 'draft' | 'approved' | 'rejected' => {
 const mapBackendToFrontend = (backendData: any): PayType & { _amount?: number } => {
   return {
     id: backendData._id || backendData.id,
-    name: backendData.type || backendData.name || '',
-    description: backendData.description || '',
+    name: backendData.name ?? backendData.type ?? '',
+    description: backendData.description ?? '',
     status: normalizeStatus(backendData.status),
     createdBy: extractUserName(backendData.createdBy),
     createdAt: backendData.createdAt || new Date().toISOString(),
     updatedAt: backendData.updatedAt || new Date().toISOString(),
     version: backendData.version || 1,
-    type: (backendData.type as 'hourly' | 'salary' | 'commission' | 'contract') || 'salary',
-    calculationMethod: backendData.calculationMethod || '',
-    isTaxable: backendData.isTaxable !== false,
-    isOvertimeEligible: backendData.isOvertimeEligible || false,
+    type: (backendData.type as 'hourly' | 'salary' | 'commission' | 'contract') ?? 'salary',
+    calculationMethod: backendData.calculationMethod ?? '',
+    isTaxable: backendData.isTaxable !== undefined ? backendData.isTaxable : true,
+    isOvertimeEligible: backendData.isOvertimeEligible ?? false,
     overtimeRate: backendData.overtimeRate,
     minHours: backendData.minHours,
     maxHours: backendData.maxHours,
@@ -46,10 +46,11 @@ const mapBackendToFrontend = (backendData: any): PayType & { _amount?: number } 
 };
 
 // Helper function to map frontend type to backend DTO
+// Backend DTO ONLY accepts: type, amount
 const mapFrontendToBackend = (frontendData: any) => {
   return {
-    type: frontendData.name || frontendData.type || '',
-    amount: parseFloat(frontendData.amount) || 0,
+    type: String(frontendData.type || 'salary').trim(),
+    amount: parseFloat(String(frontendData.amount || 0)),
   };
 };
 
@@ -98,16 +99,22 @@ export const payTypesApi = {
 
   create: async (data: Omit<PayType, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'status' | 'createdBy'>): Promise<PayType> => {
     try {
-      // Map frontend data to backend DTO format
-      const backendData = mapFrontendToBackend(data);
+      // Backend DTO ONLY accepts: type, amount
+      const type = String(data.type || 'salary').trim();
+      const amount = parseFloat(String(data.amount || 0));
       
       // Validate required fields
-      if (!backendData.type) {
-        throw new Error('Pay type name is required');
+      if (!type) {
+        throw new Error('Pay type is required');
       }
-      if (!backendData.amount || backendData.amount < 6000) {
+      if (isNaN(amount) || amount < 6000) {
         throw new Error('Pay type amount must be at least 6000');
       }
+      
+      const backendData = {
+        type: type,
+        amount: Number(amount),
+      };
       
       const response = await api.post('/payroll-configuration/pay-types', backendData);
       return mapBackendToFrontend(response);
@@ -119,30 +126,15 @@ export const payTypesApi = {
 
   update: async (id: string, data: Partial<PayType & { amount?: number }>): Promise<PayType> => {
     try {
-      // First, get the current pay type to preserve the amount field
-      const currentPayType = await payTypesApi.getById(id);
-      const currentAmount = (currentPayType as any)._amount || 6000; // Default to 6000 if not found
-      
-      // Map frontend data to backend DTO format
+      // Backend only accepts 'type' and 'amount' for updates
+      // Other fields (name, description, calculationMethod, etc.) are not accepted by the running backend
       const backendData: any = {};
       
-      // Map name to type (backend expects 'type' field)
-      if (data.name !== undefined) {
-        backendData.type = data.name;
-      } else if (data.type !== undefined) {
-        backendData.type = data.type;
-      }
+      if (data.type !== undefined) backendData.type = data.type;
+      if (data.amount !== undefined) backendData.amount = parseFloat(String(data.amount));
       
-      // Preserve or update the amount field
-      if (data.amount !== undefined) {
-        backendData.amount = parseFloat(String(data.amount));
-      } else {
-        // Preserve existing amount
-        backendData.amount = currentAmount;
-      }
-      
-      // Validate amount
-      if (backendData.amount < 6000) {
+      // Validate amount if provided
+      if (backendData.amount !== undefined && backendData.amount < 6000) {
         throw new Error('Pay type amount must be at least 6000');
       }
       

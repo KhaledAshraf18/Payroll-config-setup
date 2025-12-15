@@ -44,48 +44,48 @@ export default function TerminationBenefitsPage() {
       key: 'name', 
       label: 'Benefit Name',
       render: (item: TerminationBenefit) => (
-        <div>
-          <div className="font-medium text-gray-900">{item.name}</div>
-          <div className="text-sm text-gray-500">{item.description}</div>
-        </div>
-      )
-    },
-    { 
-      key: 'benefitType', 
-      label: 'Type',
-      render: (item: TerminationBenefit) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.benefitType === 'severance' ? 'bg-blue-100 text-blue-800' :
-          item.benefitType === 'resignation' ? 'bg-green-100 text-green-800' :
-          item.benefitType === 'retirement' ? 'bg-purple-100 text-purple-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {item.benefitType}
-        </span>
-      )
-    },
-    { 
-      key: 'calculationMethod', 
-      label: 'Calculation Method',
-      render: (item: TerminationBenefit) => (
-        <span className="text-sm text-gray-700">{item.calculationMethod}</span>
+        <div className="font-medium text-gray-900">{item.name}</div>
       )
     },
     { 
       key: 'amount', 
       label: 'Amount',
       render: (item: TerminationBenefit) => (
-        item.amount ? (
-          <div className="font-medium text-gray-900">
-            {new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'EGP'
-            }).format(item.amount)}
-          </div>
-        ) : (
-          <span className="text-sm text-gray-500">Calculated</span>
-        )
+        <div className="font-medium text-gray-900">
+          {new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'EGP'
+          }).format(item.amount || 0)}
+        </div>
       )
+    },
+    { 
+      key: 'terms', 
+      label: 'Terms',
+      render: (item: TerminationBenefit) => (
+        <div className="text-sm text-gray-900">{(item as any).terms || 'N/A'}</div>
+      )
+    },
+    { 
+      key: 'createdBy', 
+      label: 'Created By',
+      render: (item: TerminationBenefit) => {
+        // Safety check: handle if createdBy is still an object
+        let createdByDisplay: string = typeof item.createdBy === 'string' ? item.createdBy : '';
+        if (item.createdBy && typeof item.createdBy === 'object') {
+          const createdByObj = item.createdBy as any;
+          if (createdByObj.firstName && createdByObj.lastName) {
+            createdByDisplay = `${createdByObj.firstName} ${createdByObj.lastName}`;
+          } else if (createdByObj.fullName) {
+            createdByDisplay = createdByObj.fullName;
+          } else if (createdByObj.email) {
+            createdByDisplay = createdByObj.email;
+          } else {
+            createdByDisplay = 'Unknown';
+          }
+        }
+        return <div className="text-sm text-gray-900">{createdByDisplay || 'N/A'}</div>;
+      }
     },
     { 
       key: 'status', 

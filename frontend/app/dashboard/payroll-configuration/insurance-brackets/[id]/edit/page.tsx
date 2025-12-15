@@ -14,10 +14,12 @@ export default function EditInsuranceBracketPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
+    name: '',
     minSalary: '',
     maxSalary: '',
-    employeeContribution: '',
-    employerContribution: '',
+    employeeRate: '',
+    employerRate: '',
+    amount: '',
   });
 
   useEffect(() => {
@@ -33,10 +35,12 @@ export default function EditInsuranceBracketPage() {
         return;
       }
       setFormData({
-        minSalary: String(insuranceBracket.minSalary || ''),
-        maxSalary: String(insuranceBracket.maxSalary || ''),
-        employeeContribution: String(insuranceBracket.employeeContribution || ''),
-        employerContribution: String(insuranceBracket.employerContribution || ''),
+        name: (insuranceBracket as any).name ?? '',
+        minSalary: insuranceBracket.minSalary ? String(insuranceBracket.minSalary) : '',
+        maxSalary: insuranceBracket.maxSalary ? String(insuranceBracket.maxSalary) : '',
+        employeeRate: (insuranceBracket as any).employeeRate !== undefined ? String((insuranceBracket as any).employeeRate) : '',
+        employerRate: (insuranceBracket as any).employerRate !== undefined ? String((insuranceBracket as any).employerRate) : '',
+        amount: (insuranceBracket as any).amount !== undefined ? String((insuranceBracket as any).amount) : '',
       });
     } catch (err) {
       console.error('Error loading insurance bracket:', err);
@@ -55,9 +59,12 @@ export default function EditInsuranceBracketPage() {
       // Validate form data
       const minSalary = parseFloat(formData.minSalary);
       const maxSalary = parseFloat(formData.maxSalary);
-      const employeeContribution = parseFloat(formData.employeeContribution);
-      const employerContribution = parseFloat(formData.employerContribution);
+      const employeeRate = parseFloat(formData.employeeRate);
+      const employerRate = parseFloat(formData.employerRate);
 
+      if (!formData.name?.trim()) {
+        throw new Error('Insurance bracket name is required');
+      }
       if (!formData.minSalary || minSalary < 0) {
         throw new Error('Minimum salary must be non-negative');
       }
@@ -67,20 +74,26 @@ export default function EditInsuranceBracketPage() {
       if (minSalary >= maxSalary) {
         throw new Error('Minimum salary must be less than maximum salary');
       }
-      if (!formData.employeeContribution || employeeContribution < 0 || employeeContribution > 100) {
-        throw new Error('Employee contribution must be between 0 and 100');
+      if (!formData.employeeRate || employeeRate < 0 || employeeRate > 100) {
+        throw new Error('Employee rate must be between 0 and 100');
       }
-      if (!formData.employerContribution || employerContribution < 0 || employerContribution > 100) {
-        throw new Error('Employer contribution must be between 0 and 100');
+      if (!formData.employerRate || employerRate < 0 || employerRate > 100) {
+        throw new Error('Employer rate must be between 0 and 100');
       }
       
-      // Prepare data for API
-      const insuranceBracketData = {
+      // Prepare data for API - DTO accepts: name, amount?, minSalary, maxSalary, employeeRate, employerRate
+      const insuranceBracketData: any = {
+        name: formData.name.trim(),
         minSalary,
         maxSalary,
-        employeeContribution,
-        employerContribution,
+        employeeRate,
+        employerRate,
       };
+      
+      // Only include amount if provided
+      if (formData.amount && formData.amount.trim()) {
+        insuranceBracketData.amount = parseFloat(formData.amount);
+      }
       
       await insuranceBracketsApi.update(insuranceBracketId, insuranceBracketData);
       
@@ -131,6 +144,21 @@ export default function EditInsuranceBracketPage() {
         )}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Insurance Bracket Name *
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="e.g., Low Income Bracket"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Minimum Salary (EGP) *
@@ -165,12 +193,12 @@ export default function EditInsuranceBracketPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Employee Contribution (%) *
+                Employee Rate (%) *
               </label>
               <input
                 type="number"
-                name="employeeContribution"
-                value={formData.employeeContribution}
+                name="employeeRate"
+                value={formData.employeeRate}
                 onChange={handleChange}
                 required
                 min="0"
@@ -182,18 +210,34 @@ export default function EditInsuranceBracketPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Employer Contribution (%) *
+                Employer Rate (%) *
               </label>
               <input
                 type="number"
-                name="employerContribution"
-                value={formData.employerContribution}
+                name="employerRate"
+                value={formData.employerRate}
                 onChange={handleChange}
                 required
                 min="0"
                 max="100"
                 step="0.01"
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Fixed Amount (EGP) (Optional)
+              </label>
+              <input
+                type="number"
+                name="amount"
+                value={formData.amount}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Optional fixed amount"
               />
             </div>
           </div>

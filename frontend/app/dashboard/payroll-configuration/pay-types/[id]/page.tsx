@@ -1,34 +1,60 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import StatusBadge from '@/components/payroll-configuration/StatusBadge';
+import { payTypesApi } from '@/lib/api/payroll-configuration/payTypes';
 
 export default function PayTypeDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const payTypeId = params.id as string;
+  const [payType, setPayType] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data - replace with API call
-  const payType = {
-    id: payTypeId,
-    name: 'Monthly Salary',
-    description: 'Fixed monthly salary for permanent employees',
-    status: 'draft' as const,
-    type: 'salary',
-    calculationMethod: 'fixed',
-    isTaxable: true,
-    isOvertimeEligible: false,
-    createdBy: 'payroll.admin@company.com',
-    createdAt: '2024-01-10T10:00:00Z',
-    updatedAt: '2024-01-10T10:00:00Z',
-    version: 1
+  useEffect(() => {
+    loadPayType();
+  }, [payTypeId]);
+
+  const loadPayType = async () => {
+    try {
+      const data = await payTypesApi.getById(payTypeId);
+      setPayType(data);
+    } catch (error) {
+      console.error('Error loading pay type:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEdit = () => {
-    if (payType.status === 'draft') {
+    if (payType?.status === 'draft') {
       router.push(`/dashboard/payroll-configuration/pay-types/${payTypeId}/edit`);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Loading pay type...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!payType) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Pay type not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const payTypeWithAmount = payType as any;
+  const amount = payTypeWithAmount._amount || payTypeWithAmount.amount || 0;
 
   return (
     <div className="p-6">
@@ -41,7 +67,7 @@ export default function PayTypeDetailsPage() {
             ← Back
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{payType.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 capitalize">{payType.type || 'Pay Type'}</h1>
             <div className="flex items-center space-x-2 mt-1">
               <StatusBadge status={payType.status} />
               <span className="text-sm text-gray-500">ID: {payType.id}</span>
@@ -64,34 +90,18 @@ export default function PayTypeDetailsPage() {
         <div className="lg:col-span-2 bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Pay Type Details</h2>
           <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-500">Description</label>
-              <p className="mt-1 text-gray-700">{payType.description}</p>
-            </div>
-            
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-500">Type</label>
-                <p className="mt-1 text-gray-900 capitalize">{payType.type}</p>
+                <p className="mt-1 text-gray-900 capitalize">{payType.type || 'N/A'}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Calculation Method</label>
-                <p className="mt-1 text-gray-900">{payType.calculationMethod}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Tax Status</label>
-                <p className={`mt-1 inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                  payType.isTaxable ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                }`}>
-                  {payType.isTaxable ? 'Taxable' : 'Tax-free'}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Overtime</label>
-                <p className={`mt-1 inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                  payType.isOvertimeEligible ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {payType.isOvertimeEligible ? 'Eligible' : 'Not Eligible'}
+                <label className="text-sm font-medium text-gray-500">Amount</label>
+                <p className="mt-1 text-gray-900 font-medium">
+                  {new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'EGP'
+                  }).format(amount)}
                 </p>
               </div>
             </div>
@@ -104,23 +114,37 @@ export default function PayTypeDetailsPage() {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-gray-500">Created By</label>
-              <p className="mt-1 text-sm text-gray-900">{payType.createdBy}</p>
+              <p className="mt-1 text-sm text-gray-900">
+                {(() => {
+                  const createdBy = payType.createdBy;
+                  if (!createdBy) return 'N/A';
+                  if (typeof createdBy === 'string') return createdBy;
+                  if (typeof createdBy === 'object') {
+                    const obj = createdBy as any;
+                    if (obj.firstName && obj.lastName) return `${obj.firstName} ${obj.lastName}`;
+                    if (obj.fullName) return obj.fullName;
+                    if (obj.email) return obj.email;
+                    return 'Unknown';
+                  }
+                  return 'N/A';
+                })()}
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Created At</label>
               <p className="mt-1 text-sm text-gray-900">
-                {new Date(payType.createdAt).toLocaleDateString()}
+                {payType.createdAt ? new Date(payType.createdAt).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Last Updated</label>
               <p className="mt-1 text-sm text-gray-900">
-                {new Date(payType.updatedAt).toLocaleDateString()}
+                {payType.updatedAt ? new Date(payType.updatedAt).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Version</label>
-              <p className="mt-1 text-sm text-gray-900">{payType.version}</p>
+              <p className="mt-1 text-sm text-gray-900">{payType.version || 1}</p>
             </div>
           </div>
         </div>

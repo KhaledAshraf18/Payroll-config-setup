@@ -28,9 +28,9 @@ export default function EditTaxRulePage() {
     try {
       const taxRule = await taxRulesApi.getById(taxRuleId);
       setFormData({
-        name: taxRule.name || '',
-        rate: String(taxRule.rate ?? ''),
-        description: taxRule.description || '',
+        name: taxRule.name ?? '',
+        rate: taxRule.rate !== undefined && taxRule.rate !== null ? String(taxRule.rate) : '',
+        description: taxRule.description ?? '',
       });
     } catch (err) {
       console.error('Error loading tax rule:', err);

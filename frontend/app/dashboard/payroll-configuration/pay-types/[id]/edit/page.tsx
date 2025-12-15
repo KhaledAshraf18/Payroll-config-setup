@@ -13,12 +13,7 @@ export default function EditPayTypePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
     type: 'salary' as 'hourly' | 'salary' | 'commission' | 'contract',
-    calculationMethod: '',
-    isTaxable: false,
-    isOvertimeEligible: false,
     amount: '',
   });
 
@@ -32,13 +27,8 @@ export default function EditPayTypePage() {
       const payType = await payTypesApi.getById(payTypeId);
       const payTypeWithAmount = payType as any;
       setFormData({
-        name: payType.name || '',
-        description: payType.description || '',
-        type: payType.type || 'salary',
-        calculationMethod: payType.calculationMethod || '',
-        isTaxable: payType.isTaxable !== false,
-        isOvertimeEligible: payType.isOvertimeEligible || false,
-        amount: payTypeWithAmount._amount ? String(payTypeWithAmount._amount) : '6000',
+        type: payType.type ?? 'salary',
+        amount: payTypeWithAmount._amount ? String(payTypeWithAmount._amount) : '',
       });
     } catch (err) {
       console.error('Error loading pay type:', err);
@@ -55,8 +45,8 @@ export default function EditPayTypePage() {
     
     try {
       // Validate form data
-      if (!formData.name.trim()) {
-        throw new Error('Pay type name is required');
+      if (!formData.type) {
+        throw new Error('Pay type is required');
       }
       
       // Validate amount
@@ -65,14 +55,9 @@ export default function EditPayTypePage() {
         throw new Error('Pay type amount must be at least 6000');
       }
       
-      // Prepare data for API
+      // Prepare data for API - DTO only accepts: type, amount
       const payTypeData = {
-        name: formData.name,
         type: formData.type as 'hourly' | 'salary' | 'commission' | 'contract',
-        description: formData.description || '',
-        calculationMethod: formData.calculationMethod || '',
-        isTaxable: formData.isTaxable,
-        isOvertimeEligible: formData.isOvertimeEligible,
         amount: amount,
       };
       
@@ -127,26 +112,13 @@ export default function EditPayTypePage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Pay Type Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
                 Type *
               </label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
+                required
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="salary">Salary</option>
@@ -171,60 +143,6 @@ export default function EditPayTypePage() {
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="6000"
               />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Calculation Method
-              </label>
-              <input
-                type="text"
-                name="calculationMethod"
-                value={formData.calculationMethod}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., fixed, hourly_rate * hours"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isTaxable"
-                  checked={formData.isTaxable}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Is Taxable
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isOvertimeEligible"
-                  checked={formData.isOvertimeEligible}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Overtime Eligible
-                </label>
-              </div>
             </div>
           </div>
 

@@ -58,17 +58,21 @@ export default function InsuranceBracketsPage() {
       )
     },
     { 
-      key: 'employeeContribution', 
-      label: 'Employee Contribution',
+      key: 'employeeRate', 
+      label: 'Employee Rate',
       render: (item: InsuranceBracket) => (
-        <div className="font-medium text-gray-900">{item.employeeContribution}%</div>
+        <div className="font-medium text-gray-900">
+          {((item as any).employeeRate ?? item.employeeContribution ?? 0)}%
+        </div>
       )
     },
     { 
-      key: 'employerContribution', 
-      label: 'Employer Contribution',
+      key: 'employerRate', 
+      label: 'Employer Rate',
       render: (item: InsuranceBracket) => (
-        <div className="font-medium text-gray-900">{item.employerContribution}%</div>
+        <div className="font-medium text-gray-900">
+          {((item as any).employerRate ?? item.employerContribution ?? 0)}%
+        </div>
       )
     },
     { 

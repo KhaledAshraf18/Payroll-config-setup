@@ -194,11 +194,8 @@ export interface Allowance extends BaseConfiguration {
 
 export interface SigningBonus {
   _id: string;
-  name: string;
+  positionName: string; // Backend field name
   amount: number;
-  paymentTerms: string;
-  eligibilityCriteria?: string;
-  description?: string;
   status: 'draft' | 'approved' | 'rejected';
   createdBy: string;
   createdAt: string;

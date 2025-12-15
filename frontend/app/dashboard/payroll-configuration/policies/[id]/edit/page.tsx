@@ -37,17 +37,49 @@ export default function EditPolicyPage() {
       setIsLoadingData(true);
       const policy = await policiesApi.getById(policyId);
       
+      // Map backend policyType enum to frontend format
+      const policyTypeMap: Record<string, string> = {
+        'Leave': 'attendance',
+        'Allowance': 'overtime',
+        'Benefit': 'bonus',
+        'Deduction': 'deduction',
+        'Misconduct': 'other',
+      };
+      const frontendPolicyType = policyTypeMap[policy.policyType] || policy.policyType || 'overtime';
+      
+      // Extract ruleDefinition and convert to frontend format
+      // Backend has: { percentage, fixedAmount, thresholdAmount }
+      // Frontend expects for overtime: { overtimeRate, maxOvertimeHours }
+      let overtimeRate = '1.5';
+      let maxOvertimeHours = '20';
+      
+      if (policy.rules && typeof policy.rules === 'object') {
+        // If it's already in frontend format
+        if (policy.rules.overtimeRate !== undefined) {
+          overtimeRate = String(policy.rules.overtimeRate);
+        } else if (policy.rules.percentage !== undefined) {
+          // Convert percentage back to overtime rate (percentage = (rate - 1) * 100)
+          overtimeRate = String(1 + (policy.rules.percentage / 100));
+        }
+        
+        if (policy.rules.maxOvertimeHours !== undefined) {
+          maxOvertimeHours = String(policy.rules.maxOvertimeHours);
+        } else if (policy.rules.thresholdAmount !== undefined) {
+          maxOvertimeHours = String(policy.rules.thresholdAmount);
+        }
+      }
+      
       // Convert policy data to form format
       setFormData({
-        name: policy.name || '',
-        description: policy.description || '',
-        policyType: policy.policyType || 'overtime',
+        name: policy.name ?? '',
+        description: policy.description ?? '',
+        policyType: frontendPolicyType,
         effectiveDate: policy.effectiveDate ? new Date(policy.effectiveDate).toISOString().split('T')[0] : '',
-        department: policy.department || '',
-        location: policy.location || '',
-        rules_overtimeRate: policy.rules?.overtimeRate?.toString() || '1.5',
-        rules_maxOvertimeHours: policy.rules?.maxOvertimeHours?.toString() || '20',
-        applicability: 'All Employees', // Default, should be from policy if available
+        department: policy.department ?? '',
+        location: policy.location ?? '',
+        rules_overtimeRate: overtimeRate,
+        rules_maxOvertimeHours: maxOvertimeHours,
+        applicability: (policy as any).applicability || 'All Employees',
       });
     } catch (err) {
       console.error('Error loading policy:', err);
@@ -82,20 +114,23 @@ export default function EditPolicyPage() {
     }
     
     try {
-      // Convert form data to API format
-      const policyData = {
+      // Convert form data to API format - DTO accepts: policyName, policyType, description, effectiveDate, ruleDefinition, applicability
+      const policyData: any = {
         name: formData.name.trim(),
         description: formData.description.trim(),
         policyType: formData.policyType as 'attendance' | 'overtime' | 'bonus' | 'deduction' | 'other',
         effectiveDate: formData.effectiveDate ? new Date(formData.effectiveDate).toISOString() : new Date().toISOString(),
-        department: formData.department?.trim() || undefined,
-        location: formData.location?.trim() || undefined,
-        rules: {
-          overtimeRate: parseFloat(formData.rules_overtimeRate) || 1.5,
-          maxOvertimeHours: parseInt(formData.rules_maxOvertimeHours) || 20,
-        },
         applicability: formData.applicability,
       };
+      
+      // Only include overtime rules if policy type is overtime
+      // The API mapping function will convert this to ruleDefinition format
+      if (formData.policyType === 'overtime') {
+        policyData.rules = {
+          overtimeRate: parseFloat(formData.rules_overtimeRate) || 1.5,
+          maxOvertimeHours: parseInt(formData.rules_maxOvertimeHours) || 20,
+        };
+      }
       
       await policiesApi.update(policyId, policyData);
       
@@ -261,41 +296,44 @@ export default function EditPolicyPage() {
             </div>
           </div>
 
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Policy Rules</h3>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Overtime Rate
-                </label>
-                <input
-                  type="number"
-                  name="rules_overtimeRate"
-                  value={formData.rules_overtimeRate}
-                  onChange={handleChange}
-                  step="0.1"
-                  min="1"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-                <p className="mt-1 text-xs text-gray-500">Multiplier for overtime hours (e.g., 1.5 for time and a half)</p>
-              </div>
+          {/* Policy Rules - Only show overtime rules for overtime policy type */}
+          {formData.policyType === 'overtime' && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Policy Rules</h3>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Overtime Rate
+                  </label>
+                  <input
+                    type="number"
+                    name="rules_overtimeRate"
+                    value={formData.rules_overtimeRate}
+                    onChange={handleChange}
+                    step="0.1"
+                    min="1"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Multiplier for overtime hours (e.g., 1.5 for time and a half)</p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Max Overtime Hours
-                </label>
-                <input
-                  type="number"
-                  name="rules_maxOvertimeHours"
-                  value={formData.rules_maxOvertimeHours}
-                  onChange={handleChange}
-                  min="0"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-                <p className="mt-1 text-xs text-gray-500">Maximum overtime hours allowed per month</p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Max Overtime Hours
+                  </label>
+                  <input
+                    type="number"
+                    name="rules_maxOvertimeHours"
+                    value={formData.rules_maxOvertimeHours}
+                    onChange={handleChange}
+                    min="0"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Maximum overtime hours allowed per month</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className="flex justify-end space-x-3 pt-6 border-t">
             <button

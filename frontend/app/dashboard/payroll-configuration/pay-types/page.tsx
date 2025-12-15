@@ -40,18 +40,8 @@ export default function PayTypesPage() {
 
   const columns = [
     { 
-      key: 'name', 
-      label: 'Pay Type Name',
-      render: (item: any) => (
-        <div>
-          <div className="font-medium text-gray-900">{item.name}</div>
-          <div className="text-sm text-gray-500">{item.description}</div>
-        </div>
-      )
-    },
-    { 
       key: 'type', 
-      label: 'Type',
+      label: 'Pay Type',
       render: (item: any) => (
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
           item.type === 'salary' ? 'bg-purple-100 text-purple-800' :
@@ -59,32 +49,46 @@ export default function PayTypesPage() {
           item.type === 'commission' ? 'bg-green-100 text-green-800' :
           'bg-gray-100 text-gray-800'
         }`}>
-          {item.type}
+          {item.type || 'N/A'}
         </span>
       )
     },
     { 
-      key: 'calculationMethod', 
-      label: 'Calculation Method',
-      render: (item: any) => (
-        <div className="text-sm text-gray-900">
-          {item.calculationMethod}
-          {item.isOvertimeEligible && (
-            <div className="text-xs text-blue-600 mt-1">Overtime eligible</div>
-          )}
-        </div>
-      )
+      key: 'amount', 
+      label: 'Amount',
+      render: (item: any) => {
+        const payTypeWithAmount = item as any;
+        const amount = payTypeWithAmount._amount || payTypeWithAmount.amount || 0;
+        return (
+          <div className="font-medium text-gray-900">
+            {new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'EGP'
+            }).format(amount)}
+          </div>
+        );
+      }
     },
     { 
-      key: 'taxStatus', 
-      label: 'Tax Status',
-      render: (item: any) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.isTaxable ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-        }`}>
-          {item.isTaxable ? 'Taxable' : 'Tax-free'}
-        </span>
-      )
+      key: 'createdBy', 
+      label: 'Created By',
+      render: (item: any) => {
+        // Safety check: handle if createdBy is still an object
+        let createdByDisplay: string = typeof item.createdBy === 'string' ? item.createdBy : '';
+        if (item.createdBy && typeof item.createdBy === 'object') {
+          const createdByObj = item.createdBy as any;
+          if (createdByObj.firstName && createdByObj.lastName) {
+            createdByDisplay = `${createdByObj.firstName} ${createdByObj.lastName}`;
+          } else if (createdByObj.fullName) {
+            createdByDisplay = createdByObj.fullName;
+          } else if (createdByObj.email) {
+            createdByDisplay = createdByObj.email;
+          } else {
+            createdByDisplay = 'Unknown';
+          }
+        }
+        return <div className="text-sm text-gray-900">{createdByDisplay || 'N/A'}</div>;
+      }
     },
   ];
 

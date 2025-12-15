@@ -41,13 +41,10 @@ export default function SigningBonusesPage() {
 
   const columns = [
     { 
-      key: 'name', 
-      label: 'Bonus Name',
+      key: 'positionName', 
+      label: 'Position Name',
       render: (item: SigningBonus) => (
-        <div>
-          <div className="font-medium text-gray-900">{item.name}</div>
-          <div className="text-sm text-gray-500">{item.description}</div>
-        </div>
+        <div className="font-medium text-gray-900">{(item as any).positionName || item.name || 'N/A'}</div>
       )
     },
     { 
@@ -60,13 +57,6 @@ export default function SigningBonusesPage() {
             currency: 'EGP'
           }).format(item.amount)}
         </div>
-      )
-    },
-    { 
-      key: 'paymentTerms', 
-      label: 'Payment Terms',
-      render: (item: SigningBonus) => (
-        <span className="text-sm text-gray-700">{item.paymentTerms}</span>
       )
     },
     { 
@@ -98,7 +88,8 @@ export default function SigningBonusesPage() {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
+    const positionName = (item as any).positionName || item.name || 'this signing bonus';
+    if (!confirm(`Are you sure you want to delete "${positionName}"?`)) {
       return;
     }
 

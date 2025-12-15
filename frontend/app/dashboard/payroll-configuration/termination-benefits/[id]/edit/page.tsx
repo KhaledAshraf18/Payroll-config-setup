@@ -32,9 +32,9 @@ export default function EditTerminationBenefitPage() {
         return;
       }
       setFormData({
-        name: terminationBenefit.name || '',
+        name: terminationBenefit.name ?? '',
         amount: terminationBenefit.amount ? String(terminationBenefit.amount) : '',
-        terms: (terminationBenefit as any).terms || '',
+        terms: (terminationBenefit as any).terms ?? '',
       });
     } catch (err) {
       console.error('Error loading termination benefit:', err);

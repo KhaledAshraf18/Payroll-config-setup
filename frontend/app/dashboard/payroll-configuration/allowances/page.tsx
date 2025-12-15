@@ -43,53 +43,41 @@ export default function AllowancesPage() {
       key: 'name', 
       label: 'Allowance Name',
       render: (item: any) => (
-        <div>
-          <div className="font-medium text-gray-900">{item.name}</div>
-          <div className="text-sm text-gray-500">{item.description}</div>
-        </div>
-      )
-    },
-    { 
-      key: 'type', 
-      label: 'Type',
-      render: (item: any) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.allowanceType === 'housing' ? 'bg-blue-100 text-blue-800' :
-          item.allowanceType === 'transportation' ? 'bg-green-100 text-green-800' :
-          item.allowanceType === 'meal' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {item.allowanceType}
-        </span>
+        <div className="font-medium text-gray-900">{item.name}</div>
       )
     },
     { 
       key: 'amount', 
       label: 'Amount',
       render: (item: any) => (
-        <div>
-          <div className="font-medium text-gray-900">
-            {new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: item.currency
-            }).format(item.amount)}
-          </div>
-          <div className="text-xs text-gray-500">
-            {item.frequency} • {item.taxable ? 'Taxable' : 'Tax-free'}
-          </div>
+        <div className="font-medium text-gray-900">
+          {new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'EGP'
+          }).format(item.amount || 0)}
         </div>
       )
     },
     { 
-      key: 'recurring', 
-      label: 'Recurring',
-      render: (item: any) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.isRecurring ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-        }`}>
-          {item.isRecurring ? 'Recurring' : 'One-time'}
-        </span>
-      )
+      key: 'createdBy', 
+      label: 'Created By',
+      render: (item: any) => {
+        // Safety check: handle if createdBy is still an object
+        let createdByDisplay: string = typeof item.createdBy === 'string' ? item.createdBy : '';
+        if (item.createdBy && typeof item.createdBy === 'object') {
+          const createdByObj = item.createdBy as any;
+          if (createdByObj.firstName && createdByObj.lastName) {
+            createdByDisplay = `${createdByObj.firstName} ${createdByObj.lastName}`;
+          } else if (createdByObj.fullName) {
+            createdByDisplay = createdByObj.fullName;
+          } else if (createdByObj.email) {
+            createdByDisplay = createdByObj.email;
+          } else {
+            createdByDisplay = 'Unknown';
+          }
+        }
+        return <div className="text-sm text-gray-900">{createdByDisplay || 'N/A'}</div>;
+      }
     },
   ];
 

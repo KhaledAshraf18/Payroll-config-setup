@@ -30,18 +30,34 @@ export const signingBonusesApi = {
 
   create: async (data: CreateSigningBonusDto): Promise<SigningBonus> => {
     try {
+      // Validate input
+      const positionName = String(data.positionName || '').trim();
+      const amount = parseFloat(String(data.amount || 0));
+      
+      if (!positionName) {
+        throw new Error('Position name is required');
+      }
+      if (isNaN(amount) || amount < 0) {
+        throw new Error('Amount must be a valid non-negative number');
+      }
+      
       // Explicitly create payload with only allowed fields
       const payload = {
-        positionName: String(data.positionName).trim(),
-        amount: Number(data.amount),
+        positionName: positionName,
+        amount: amount,
       };
       console.log('API: Sending signing bonus payload:', payload);
+      console.log('Payload types:', { positionName: typeof payload.positionName, amount: typeof payload.amount });
       const response = await api.post(BASE_URL, payload) as any;
       // Response interceptor already extracts response.data
       return response;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating signing bonus:', error);
-      throw error;
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Failed to create signing bonus';
+      throw new Error(errorMessage);
     }
   },
 

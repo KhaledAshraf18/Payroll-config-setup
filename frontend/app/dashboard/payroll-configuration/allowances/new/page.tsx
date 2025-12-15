@@ -14,14 +14,7 @@ export default function NewAllowancePage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    allowanceType: 'transportation',
     amount: '',
-    currency: 'EGP',
-    isRecurring: true,
-    frequency: 'monthly',
-    taxable: false,
-    effectiveDate: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,17 +31,10 @@ export default function NewAllowancePage() {
         throw new Error('Allowance amount must be non-negative');
       }
       
-      // Prepare data for API
+      // Prepare data for API - DTO only accepts: name, amount
       const allowanceData = {
         name: formData.name,
-        description: formData.description || '',
-        allowanceType: formData.allowanceType as 'housing' | 'transportation' | 'meal' | 'education' | 'medical' | 'other',
         amount: parseFloat(formData.amount),
-        currency: formData.currency,
-        isRecurring: formData.isRecurring,
-        frequency: formData.frequency as 'monthly' | 'quarterly' | 'yearly' | 'one-time',
-        taxable: formData.taxable,
-        effectiveDate: formData.effectiveDate || undefined,
       };
       
       await allowancesApi.create(allowanceData);
@@ -108,113 +94,18 @@ export default function NewAllowancePage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Type *
-              </label>
-              <select
-                name="allowanceType"
-                value={formData.allowanceType}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="transportation">Transportation</option>
-                <option value="housing">Housing</option>
-                <option value="meal">Meal</option>
-                <option value="education">Education</option>
-                <option value="medical">Medical</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={2}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Describe this allowance..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Amount *
-              </label>
-              <div className="mt-1 flex rounded-md shadow-sm">
-                <input
-                  type="number"
-                  name="amount"
-                  value={formData.amount}
-                  onChange={handleChange}
-                  required
-                  min="0"
-                  step="0.01"
-                  className="block w-full border border-gray-300 rounded-l-md py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
-                <span className="inline-flex items-center px-3 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 rounded-r-md">
-                  {formData.currency}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Frequency
-              </label>
-              <select
-                name="frequency"
-                value={formData.frequency}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="monthly">Monthly</option>
-                <option value="quarterly">Quarterly</option>
-                <option value="yearly">Yearly</option>
-                <option value="one-time">One Time</option>
-              </select>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isRecurring"
-                  checked={formData.isRecurring}
-                  onChange={(e) => setFormData(prev => ({ ...prev, isRecurring: e.target.checked }))}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Recurring Allowance
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="taxable"
-                  checked={formData.taxable}
-                  onChange={(e) => setFormData(prev => ({ ...prev, taxable: e.target.checked }))}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Taxable Allowance
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Effective Date (Optional)
+                Amount (EGP) *
               </label>
               <input
-                type="date"
-                name="effectiveDate"
-                value={formData.effectiveDate}
+                type="number"
+                name="amount"
+                value={formData.amount}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+                min="0"
+                step="0.01"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="0.00"
               />
             </div>
           </div>

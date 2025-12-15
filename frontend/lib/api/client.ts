@@ -88,12 +88,21 @@ api.interceptors.response.use(
       console.log("User role may not have access to this endpoint");
     }
 
-    // Extract error message
-    const errorMessage =
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      error.message ||
-      `HTTP ${error.response?.status || "Unknown"} error`;
+    // Extract error message - handle validation errors
+    let errorMessage = error.message || `HTTP ${error.response?.status || "Unknown"} error`;
+    
+    if (error.response?.data) {
+      // Handle validation errors (array of messages)
+      if (Array.isArray(error.response.data.message)) {
+        errorMessage = error.response.data.message.join(', ');
+      } else if (error.response.data.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response.data.error) {
+        errorMessage = error.response.data.error;
+      } else if (typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      }
+    }
 
     return Promise.reject(new Error(errorMessage));
   }

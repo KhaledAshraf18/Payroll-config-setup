@@ -42,46 +42,44 @@ export default function PayGradesPage() {
       key: 'name', 
       label: 'Pay Grade Name',
       render: (item: any) => (
-        <div>
-          <div className="font-medium text-gray-900">{item.name}</div>
-          <div className="text-sm text-gray-500">{item.jobGrade} • {item.jobBand}</div>
-        </div>
+        <div className="font-medium text-gray-900">{item.name}</div>
       )
     },
     { 
       key: 'salary', 
       label: 'Salary Range',
       render: (item: any) => (
-        <div>
-          <div className="font-medium text-gray-900">
-            {new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: item.currency
-            }).format(item.minSalary)} - {new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: item.currency
-            }).format(item.maxSalary)}
-          </div>
-          <div className="text-xs text-gray-500">{item.currency}</div>
-        </div>
-      )
-    },
-    { 
-      key: 'benefits', 
-      label: 'Benefits',
-      render: (item: any) => (
-        <div className="text-sm text-gray-900">
-          {item.benefits?.slice(0, 2).join(', ')}
-          {item.benefits?.length > 2 && '...'}
+        <div className="font-medium text-gray-900">
+          {new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'EGP'
+          }).format(item.minSalary || 0)} - {new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'EGP'
+          }).format(item.maxSalary || 0)}
         </div>
       )
     },
     { 
       key: 'createdBy', 
       label: 'Created By',
-      render: (item: any) => (
-        <div className="text-sm text-gray-900">{item.createdBy}</div>
-      )
+      render: (item: any) => {
+        // Safety check: handle if createdBy is still an object
+        let createdByDisplay: string = typeof item.createdBy === 'string' ? item.createdBy : '';
+        if (item.createdBy && typeof item.createdBy === 'object') {
+          const createdByObj = item.createdBy as any;
+          if (createdByObj.firstName && createdByObj.lastName) {
+            createdByDisplay = `${createdByObj.firstName} ${createdByObj.lastName}`;
+          } else if (createdByObj.fullName) {
+            createdByDisplay = createdByObj.fullName;
+          } else if (createdByObj.email) {
+            createdByDisplay = createdByObj.email;
+          } else {
+            createdByDisplay = 'Unknown';
+          }
+        }
+        return <div className="text-sm text-gray-900">{createdByDisplay || 'N/A'}</div>;
+      }
     },
   ];
 

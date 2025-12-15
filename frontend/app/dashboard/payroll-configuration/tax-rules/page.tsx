@@ -63,39 +63,41 @@ export default function TaxRulesPage() {
       render: (item: TaxRule) => (
         <div>
           <div className="font-medium text-gray-900">{item.name}</div>
-          <div className="text-sm text-gray-500">{item.description}</div>
+          {item.description && (
+            <div className="text-sm text-gray-500">{item.description}</div>
+          )}
         </div>
-      )
-    },
-    { 
-      key: 'taxType', 
-      label: 'Tax Type',
-      render: (item: TaxRule) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.taxType === 'income' ? 'bg-blue-100 text-blue-800' :
-          item.taxType === 'social_security' ? 'bg-green-100 text-green-800' :
-          item.taxType === 'health' ? 'bg-purple-100 text-purple-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {item.taxType ? String(item.taxType).replace('_', ' ') : 'Unknown'}
-        </span>
       )
     },
     { 
       key: 'rate', 
       label: 'Rate',
       render: (item: TaxRule) => (
-        <div>
-          <div className="font-medium text-gray-900">
-            {item.rate}%
-          </div>
-          {item.brackets && item.brackets.length > 0 && (
-            <div className="text-xs text-gray-500">
-              {item.brackets.length} bracket(s)
-            </div>
-          )}
+        <div className="font-medium text-gray-900">
+          {item.rate}%
         </div>
       )
+    },
+    { 
+      key: 'createdBy', 
+      label: 'Created By',
+      render: (item: TaxRule) => {
+        // Safety check: handle if createdBy is still an object
+        let createdByDisplay: string = typeof item.createdBy === 'string' ? item.createdBy : '';
+        if (item.createdBy && typeof item.createdBy === 'object') {
+          const createdByObj = item.createdBy as any;
+          if (createdByObj.firstName && createdByObj.lastName) {
+            createdByDisplay = `${createdByObj.firstName} ${createdByObj.lastName}`;
+          } else if (createdByObj.fullName) {
+            createdByDisplay = createdByObj.fullName;
+          } else if (createdByObj.email) {
+            createdByDisplay = createdByObj.email;
+          } else {
+            createdByDisplay = 'Unknown';
+          }
+        }
+        return <div className="text-sm text-gray-900">{createdByDisplay || 'N/A'}</div>;
+      }
     },
     { 
       key: 'status', 

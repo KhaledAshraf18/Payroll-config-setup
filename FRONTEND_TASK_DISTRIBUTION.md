@@ -22,6 +22,7 @@ This document outlines the frontend development tasks for the Payroll Configurat
 #### Tasks:
 
 1. **Payroll Policies Management Page**
+   - Role: Payroll Specialist (Create/Edit), All roles (View)
    - Route: `/dashboard/payroll-configuration/policies`
    - Features:
      - List all policies with status filter (Draft/Approved/Rejected)
@@ -33,6 +34,7 @@ This document outlines the frontend development tasks for the Payroll Configurat
    - Estimated: 3-4 days
 
 2. **Pay Grades Management Page**
+   - Role: Payroll Specialist (Create/Edit), All roles (View)
    - Route: `/dashboard/payroll-configuration/pay-grades`
    - Features:
      - List all pay grades with pagination
@@ -44,6 +46,7 @@ This document outlines the frontend development tasks for the Payroll Configurat
    - Estimated: 3-4 days
 
 3. **Pay Types Management Page**
+   - Role: Payroll Specialist (Create/Edit), All roles (View)
    - Route: `/dashboard/payroll-configuration/pay-types`
    - Features:
      - List all pay types
@@ -54,6 +57,7 @@ This document outlines the frontend development tasks for the Payroll Configurat
    - Estimated: 2-3 days
 
 4. **Allowances Management Page**
+   - Role: Payroll Specialist (Create/Edit), All roles (View)
    - Route: `/dashboard/payroll-configuration/allowances`
    - Features:
      - List all allowances
@@ -74,6 +78,7 @@ This document outlines the frontend development tasks for the Payroll Configurat
 #### Tasks:
 
 1. **Signing Bonuses Management Page**
+   - Role: Payroll Specialist (Create/Edit), All roles (View)
    - Route: `/dashboard/payroll-configuration/signing-bonuses`
    - Features:
      - List all signing bonuses
@@ -85,6 +90,7 @@ This document outlines the frontend development tasks for the Payroll Configurat
    - Estimated: 2-3 days
 
 2. **Termination Benefits Management Page**
+   - Role: Payroll Specialist (Create/Edit), All roles (View)
    - Route: `/dashboard/payroll-configuration/termination-benefits`
    - Features:
      - List all termination/resignation benefits
@@ -96,6 +102,7 @@ This document outlines the frontend development tasks for the Payroll Configurat
    - Estimated: 2-3 days
 
 3. **Tax Rules Management Page**
+   - Role: Legal Admin (Create/Edit), All roles (View - Read-only)
    - Route: `/dashboard/payroll-configuration/tax-rules`
    - Features:
      - List all tax rules (Read-only for most users)
@@ -104,10 +111,10 @@ This document outlines the frontend development tasks for the Payroll Configurat
      - Legal rules update functionality (Edit approved rules - goes back to Draft)
      - Progressive tax rates display
    - API Integration: `GET /payroll-configuration/tax-rules`, `POST /payroll-configuration/tax-rules`, `PUT /payroll-configuration/tax-rules/:id`
-   - Role: Legal Admin for Create/Edit
    - Estimated: 3-4 days
 
 4. **Insurance Brackets Management Page**
+   - Role: Payroll Specialist (Create/Edit), HR Manager (Approve/Reject/Delete), All roles (View)
    - Route: `/dashboard/payroll-configuration/insurance-brackets`
    - Features:
      - List all insurance brackets
@@ -131,6 +138,7 @@ This document outlines the frontend development tasks for the Payroll Configurat
 #### Tasks:
 
 1. **Company-Wide Settings Page** ✅ **CAN START IMMEDIATELY**
+   - Role: System Admin (Create/Edit/View)
    - Route: `/dashboard/payroll-configuration/company-settings`
    - Features:
      - View company settings (pay dates, timezone, currency)
@@ -138,11 +146,11 @@ This document outlines the frontend development tasks for the Payroll Configurat
      - Edit company settings (System Admin only)
      - Form validation (currency must be EGP)
    - API Integration: `GET /payroll-configuration/company-settings`, `POST /payroll-configuration/company-settings`, `PUT /payroll-configuration/company-settings`
-   - Role: System Admin
    - Dependencies: None (independent task)
    - Estimated: 2-3 days
 
 2. **Backup Management Page** ✅ **CAN START IMMEDIATELY**
+   - Role: System Admin (All actions)
    - Route: `/dashboard/payroll-configuration/backup`
    - Features:
      - View backup status and history
@@ -150,11 +158,11 @@ This document outlines the frontend development tasks for the Payroll Configurat
      - Backup schedule configuration
      - Download backup files
    - API Integration: (Backend API needs to be created)
-   - Role: System Admin
    - Dependencies: None (independent task)
    - Estimated: 2-3 days
 
 3. **Payroll Manager Approval Dashboard** ⏳ **WAIT FOR MEMBERS 1 & 2**
+   - Role: Payroll Manager (Approve/Reject/Delete/View)
    - Route: `/dashboard/payroll-configuration/approvals`
    - Features:
      - List all pending approvals (excluding insurance & company settings)
@@ -169,12 +177,12 @@ This document outlines the frontend development tasks for the Payroll Configurat
      - `POST /payroll-configuration/{type}/:id/approve`
      - `POST /payroll-configuration/{type}/:id/reject`
      - `DELETE /payroll-configuration/{type}/:id`
-   - Role: Payroll Manager
    - Dependencies: Needs configurations from Members 1 & 2 (policies, pay grades, pay types, allowances, signing bonuses, termination benefits, tax rules)
    - Note: Can start building UI structure with mock data, but full functionality requires real data
    - Estimated: 4-5 days
 
 4. **HR Manager Insurance Oversight Page** ⏳ **WAIT FOR MEMBER 2**
+   - Role: HR Manager (Edit/Approve/Reject/Delete/View)
    - Route: `/dashboard/payroll-configuration/insurance-oversight`
    - Features:
      - List all insurance brackets (with status filter)
@@ -189,12 +197,12 @@ This document outlines the frontend development tasks for the Payroll Configurat
      - `POST /payroll-configuration/insurance-brackets/:id/approve`
      - `POST /payroll-configuration/insurance-brackets/:id/reject`
      - `DELETE /payroll-configuration/insurance-brackets/:id`
-   - Role: HR Manager
    - Dependencies: Needs insurance brackets from Member 2
    - Note: Can start building UI structure with mock data, but full functionality requires real data
    - Estimated: 3-4 days
 
 5. **Configuration Statistics Dashboard** ⏳ **WAIT FOR MEMBERS 1 & 2**
+   - Role: Payroll Manager, System Admin (View)
    - Route: `/dashboard/payroll-configuration/stats`
    - Features:
      - Overview cards (Total configs, Pending approvals, Approved, Rejected)
@@ -202,7 +210,6 @@ This document outlines the frontend development tasks for the Payroll Configurat
      - Recent activity feed
      - Quick links to pending approvals
    - API Integration: `GET /payroll-configuration/stats`
-   - Role: Payroll Manager, System Admin
    - Dependencies: Needs configuration data from Members 1 & 2
    - Note: Can start building UI structure with mock data, but meaningful stats require real data
    - Estimated: 2-3 days
