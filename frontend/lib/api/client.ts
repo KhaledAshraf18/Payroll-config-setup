@@ -58,18 +58,27 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
+    const errorDetails = {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      message: error.message,
+      responseData: error.response?.data,
+      requestData: error.config?.data,
+      requestUrl: error.config?.url,
+      requestMethod: error.config?.method,
+    };
+    
     console.error(
       `❌ API Error [${error.config?.method?.toUpperCase()} ${
         error.config?.url
       }]:`,
-      {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        message: error.message,
-        responseData: error.response?.data,
-        headers: error.response?.headers,
-      }
+      errorDetails
     );
+    
+    // Log the full error for debugging
+    if (error.response?.data) {
+      console.error('Backend error response:', JSON.stringify(error.response.data, null, 2));
+    }
 
     // Handle errors
     if (error.response?.status === 401) {
