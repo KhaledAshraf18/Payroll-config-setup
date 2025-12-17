@@ -66,19 +66,27 @@ export default function InsuranceBracketDetailsPage() {
   const getCreatedByName = () => {
     if (!insuranceBracket.createdBy) return 'N/A';
     if (typeof insuranceBracket.createdBy === 'string') return insuranceBracket.createdBy;
-    if (insuranceBracket.createdBy.firstName && insuranceBracket.createdBy.lastName) {
-      return `${insuranceBracket.createdBy.firstName} ${insuranceBracket.createdBy.lastName}`;
+    const createdBy = insuranceBracket.createdBy as any;
+    if (createdBy && typeof createdBy === 'object') {
+      if (createdBy.firstName && createdBy.lastName) {
+        return `${createdBy.firstName} ${createdBy.lastName}`;
+      }
+      return createdBy.email || createdBy.fullName || 'N/A';
     }
-    return insuranceBracket.createdBy.email || insuranceBracket.createdBy.fullName || 'N/A';
+    return 'N/A';
   };
 
   const getApprovedByName = () => {
     if (!insuranceBracket.approvedBy) return null;
     if (typeof insuranceBracket.approvedBy === 'string') return insuranceBracket.approvedBy;
-    if (insuranceBracket.approvedBy.firstName && insuranceBracket.approvedBy.lastName) {
-      return `${insuranceBracket.approvedBy.firstName} ${insuranceBracket.approvedBy.lastName}`;
+    const approvedBy = insuranceBracket.approvedBy as any;
+    if (approvedBy && typeof approvedBy === 'object') {
+      if (approvedBy.firstName && approvedBy.lastName) {
+        return `${approvedBy.firstName} ${approvedBy.lastName}`;
+      }
+      return approvedBy.email || approvedBy.fullName || 'Unknown';
     }
-    return insuranceBracket.approvedBy.email || insuranceBracket.approvedBy.fullName || 'Unknown';
+    return 'Unknown';
   };
 
   const name = (insuranceBracket as any).name || 'Insurance Bracket';
@@ -113,7 +121,7 @@ export default function InsuranceBracketDetailsPage() {
                 </h1>
                 <div className="flex items-center gap-3 mt-2">
                   <StatusBadge status={insuranceBracket.status} />
-                  <span className="text-sm text-gray-500 font-mono">ID: {insuranceBracket._id || insuranceBracket.id}</span>
+                  <span className="text-sm text-gray-500 font-mono">ID: {insuranceBracket._id}</span>
                 </div>
               </div>
             </div>

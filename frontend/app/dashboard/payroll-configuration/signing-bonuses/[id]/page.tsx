@@ -66,13 +66,17 @@ export default function SigningBonusDetailsPage() {
   const getCreatedByName = () => {
     if (!signingBonus.createdBy) return 'N/A';
     if (typeof signingBonus.createdBy === 'string') return signingBonus.createdBy;
-    if (signingBonus.createdBy.firstName && signingBonus.createdBy.lastName) {
-      return `${signingBonus.createdBy.firstName} ${signingBonus.createdBy.lastName}`;
+    const createdBy = signingBonus.createdBy as any;
+    if (createdBy && typeof createdBy === 'object') {
+      if (createdBy.firstName && createdBy.lastName) {
+        return `${createdBy.firstName} ${createdBy.lastName}`;
+      }
+      return createdBy.email || createdBy.fullName || 'N/A';
     }
-    return signingBonus.createdBy.email || signingBonus.createdBy.fullName || 'N/A';
+    return 'N/A';
   };
 
-  const positionName = (signingBonus as any).positionName || signingBonus.name || 'Signing Bonus';
+  const positionName = (signingBonus as any).positionName || 'Signing Bonus';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 p-6">
@@ -102,7 +106,7 @@ export default function SigningBonusDetailsPage() {
                 </h1>
                 <div className="flex items-center gap-3 mt-2">
                   <StatusBadge status={signingBonus.status} />
-                  <span className="text-sm text-gray-500 font-mono">ID: {signingBonus._id || signingBonus.id}</span>
+                  <span className="text-sm text-gray-500 font-mono">ID: {signingBonus._id}</span>
                 </div>
               </div>
             </div>

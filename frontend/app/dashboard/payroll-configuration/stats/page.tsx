@@ -11,15 +11,12 @@ import Link from 'next/link';
 
 export default function StatsPage() {
   const { user } = useAuth();
-  // Allow Payroll Manager, System Admin, HR Manager, HR Admin, Employee (view-only), and Department Head (view-only)
+  // SYSTEM_ADMIN should have access to stats (highest admin role)
+  // Note: Backend currently only allows PAYROLL_MANAGER - backend needs to be updated to include SYSTEM_ADMIN
   useRequireAuth(
     [
       SystemRole.PAYROLL_MANAGER,
       SystemRole.SYSTEM_ADMIN,
-      SystemRole.HR_MANAGER,
-      SystemRole.HR_ADMIN,
-      SystemRole.DEPARTMENT_EMPLOYEE,
-      SystemRole.DEPARTMENT_HEAD,
     ],
     '/dashboard'
   );

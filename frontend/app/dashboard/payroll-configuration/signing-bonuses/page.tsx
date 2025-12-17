@@ -51,7 +51,7 @@ export default function SigningBonusesPage() {
             </svg>
           </div>
           <div>
-            <div className="font-semibold text-gray-900">{(item as any).positionName || item.name || 'N/A'}</div>
+            <div className="font-semibold text-gray-900">{(item as any).positionName || 'N/A'}</div>
             <div className="text-xs text-gray-500 mt-0.5">Eligible position</div>
           </div>
         </div>
@@ -107,7 +107,7 @@ export default function SigningBonusesPage() {
       return;
     }
 
-    const positionName = (item as any).positionName || item.name || 'this signing bonus';
+    const positionName = (item as any).positionName || 'this signing bonus';
     if (!confirm(`Are you sure you want to delete "${positionName}"?`)) {
       return;
     }

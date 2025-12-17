@@ -31,7 +31,7 @@ export default function EditSigningBonusPage() {
         return;
       }
       setFormData({
-        positionName: (signingBonus as any).positionName ?? signingBonus.name ?? '',
+        positionName: (signingBonus as any).positionName ?? '',
         amount: signingBonus.amount ? String(signingBonus.amount) : '',
       });
     } catch (err) {

@@ -97,7 +97,7 @@ export const payTypesApi = {
     }
   },
 
-  create: async (data: Omit<PayType, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'status' | 'createdBy'>): Promise<PayType> => {
+  create: async (data: { type: string; amount: number }): Promise<PayType> => {
     // Backend DTO ONLY accepts: type, amount
     const type = String(data.type || 'salary').trim();
     

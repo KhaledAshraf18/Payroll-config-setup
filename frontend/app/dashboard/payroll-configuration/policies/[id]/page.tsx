@@ -71,19 +71,27 @@ export default function PolicyDetailsPage() {
   const getCreatedByName = () => {
     if (!policy.createdBy) return 'N/A';
     if (typeof policy.createdBy === 'string') return policy.createdBy;
-    if (policy.createdBy.firstName && policy.createdBy.lastName) {
-      return `${policy.createdBy.firstName} ${policy.createdBy.lastName}`;
+    const createdBy = policy.createdBy as any;
+    if (createdBy && typeof createdBy === 'object') {
+      if (createdBy.firstName && createdBy.lastName) {
+        return `${createdBy.firstName} ${createdBy.lastName}`;
+      }
+      return createdBy.email || createdBy.fullName || 'N/A';
     }
-    return policy.createdBy.email || policy.createdBy.fullName || 'N/A';
+    return 'N/A';
   };
 
   const getApprovedByName = () => {
     if (!policy.approvedBy) return null;
     if (typeof policy.approvedBy === 'string') return policy.approvedBy;
-    if (policy.approvedBy.firstName && policy.approvedBy.lastName) {
-      return `${policy.approvedBy.firstName} ${policy.approvedBy.lastName}`;
+    const approvedBy = policy.approvedBy as any;
+    if (approvedBy && typeof approvedBy === 'object') {
+      if (approvedBy.firstName && approvedBy.lastName) {
+        return `${approvedBy.firstName} ${approvedBy.lastName}`;
+      }
+      return approvedBy.email || approvedBy.fullName || 'Unknown';
     }
-    return policy.approvedBy.email || policy.approvedBy.fullName || 'Unknown';
+    return 'Unknown';
   };
 
   return (
@@ -230,10 +238,10 @@ export default function PolicyDetailsPage() {
                       }) : 'N/A'}
                     </p>
                   </div>
-                  {policy.applicability && (
+                  {(policy as any).applicability && (
                     <div className="p-4 bg-purple-50 rounded-xl">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Applicability</label>
-                      <p className="text-sm font-medium text-purple-700">{policy.applicability}</p>
+                      <p className="text-sm font-medium text-purple-700">{(policy as any).applicability}</p>
                     </div>
                   )}
                 </div>

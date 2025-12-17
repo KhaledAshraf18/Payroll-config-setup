@@ -66,10 +66,14 @@ export default function TerminationBenefitDetailsPage() {
   const getCreatedByName = () => {
     if (!terminationBenefit.createdBy) return 'N/A';
     if (typeof terminationBenefit.createdBy === 'string') return terminationBenefit.createdBy;
-    if (terminationBenefit.createdBy.firstName && terminationBenefit.createdBy.lastName) {
-      return `${terminationBenefit.createdBy.firstName} ${terminationBenefit.createdBy.lastName}`;
+    const createdBy = terminationBenefit.createdBy as any;
+    if (createdBy && typeof createdBy === 'object') {
+      if (createdBy.firstName && createdBy.lastName) {
+        return `${createdBy.firstName} ${createdBy.lastName}`;
+      }
+      return createdBy.email || createdBy.fullName || 'N/A';
     }
-    return terminationBenefit.createdBy.email || terminationBenefit.createdBy.fullName || 'N/A';
+    return 'N/A';
   };
 
   return (
@@ -100,7 +104,7 @@ export default function TerminationBenefitDetailsPage() {
                 </h1>
                 <div className="flex items-center gap-3 mt-2">
                   <StatusBadge status={terminationBenefit.status} />
-                  <span className="text-sm text-gray-500 font-mono">ID: {terminationBenefit._id || terminationBenefit.id}</span>
+                  <span className="text-sm text-gray-500 font-mono">ID: {terminationBenefit._id}</span>
                 </div>
               </div>
             </div>
@@ -152,10 +156,10 @@ export default function TerminationBenefitDetailsPage() {
                       </p>
                     </div>
                   )}
-                  {terminationBenefit.terms && (
+                  {(terminationBenefit as any).terms && (
                     <div className="p-6 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border-2 border-rose-200">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Terms</label>
-                      <p className="text-sm font-medium text-rose-700">{terminationBenefit.terms}</p>
+                      <p className="text-sm font-medium text-rose-700">{(terminationBenefit as any).terms}</p>
                     </div>
                   )}
                 </div>
