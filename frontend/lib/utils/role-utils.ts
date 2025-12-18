@@ -267,7 +267,7 @@ export function getPrimaryDashboard(user: User | null): string {
   if (roles.includes(SystemRole.HR_MANAGER)) return "/dashboard/hr";
   if (roles.includes(SystemRole.PAYROLL_MANAGER)) return "/dashboard/payroll";
   if (roles.includes(SystemRole.PAYROLL_SPECIALIST))
-    return "/dashboard/payroll";
+    return "/dashboard/payroll-configuration";
   if (roles.includes(SystemRole.RECRUITER)) return "/dashboard/recruitment";
   if (roles.includes(SystemRole.DEPARTMENT_HEAD))
     return "/dashboard/employee-profile";

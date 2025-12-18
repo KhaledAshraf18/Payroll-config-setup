@@ -101,7 +101,7 @@ export const payGradesApi = {
     }
   },
 
-  create: async (data: Omit<PayGrade, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'status' | 'createdBy'>): Promise<PayGrade> => {
+  create: async (data: { name: string; minSalary: number; maxSalary: number }): Promise<PayGrade> => {
     try {
       // Backend DTO ONLY accepts: grade, baseSalary, grossSalary
       const name = String(data.name || '').trim();
